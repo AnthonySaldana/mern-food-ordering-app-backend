@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import Influencer from "../models/influencer";
 import cloudinary from "cloudinary";
 import mongoose from "mongoose";
-import MealPlan from "../models/mealPlan";
+import MealPlan from "../models/mealplan";
 
 const getInfluencer = async (req: Request, res: Response) => {
   try {
@@ -52,8 +52,7 @@ const updateInfluencer = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Influencer not found" });
     }
 
-    influencer.name = req.body.name;
-    influencer.bio = req.body.bio;
+    Object.assign(influencer, req.body);
     influencer.lastUpdated = new Date();
 
     if (req.file) {

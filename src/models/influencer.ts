@@ -6,13 +6,33 @@ const socialSchema = new mongoose.Schema({
   handle: { type: String, required: true },
 });
 
+const macroSchema = new mongoose.Schema({
+  protein: { type: Number },
+  carbs: { type: Number }, 
+  fat: { type: Number }
+});
+
+const menuItemSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  price: { type: Number, required: true },
+  ingredients: { type: String },
+  calories: { type: Number },
+  macros: macroSchema
+});
+
 export type SocialType = InferSchemaType<typeof socialSchema>;
 
 const influencerSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   name: { type: String, required: true },
   bio: { type: String, required: true },
+  city: { type: String, required: true },
+  country: { type: String, required: true },
+  deliveryPrice: { type: Number, required: true },
+  estimatedDeliveryTime: { type: Number, required: true },
   socials: [socialSchema],
+  cuisines: [{ type: String, required: true }],
+  menuItems: [menuItemSchema],
   mealPlans: [{ type: mongoose.Schema.Types.ObjectId, ref: "MealPlan" }],
   imageUrl: { type: String },
   lastUpdated: { type: Date },
