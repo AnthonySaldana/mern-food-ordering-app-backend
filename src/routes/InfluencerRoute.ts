@@ -1,5 +1,6 @@
 import express from "express";
 import multer from "multer";
+import { param } from "express-validator";
 import InfluencerController from "../controllers/InfluencerController";
 import { jwtCheck, jwtParse } from "../middleware/auth";
 import { validateInfluencerRequest } from "../middleware/validation";
@@ -23,12 +24,37 @@ router.get(
 
 router.patch(
   "/mealplan/:mealPlanId",
+  param("mealPlanId")
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage("MealPlanId parameter must be a valid string"),
   jwtCheck,
   jwtParse,
   InfluencerController.updateMealPlan
 );
 
 router.get("/", jwtCheck, jwtParse, InfluencerController.getInfluencer);
+
+router.get(
+  "/:influencerId",
+  param("influencerId")
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage("InfluencerId parameter must be a valid string"),
+  InfluencerController.getInfluencerById
+);
+
+router.get(
+  "/search/:city",
+  param("city")
+    .isString()
+    .trim()
+    .notEmpty()
+    .withMessage("City parameter must be a valid string"),
+  InfluencerController.searchInfluencer
+);
 
 router.post(
   "/",
