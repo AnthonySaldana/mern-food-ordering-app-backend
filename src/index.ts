@@ -8,6 +8,7 @@ import myRestaurantRoute from "./routes/MyRestaurantRoute";
 import restaurantRoute from "./routes/RestaurantRoute";
 import orderRoute from "./routes/OrderRoute";
 import influencerRoute from "./routes/InfluencerRoute";
+const PORT = process.env.PORT || 7000;
 mongoose
   .connect(process.env.MONGODB_CONNECTION_STRING as string)
   .then(() => console.log("Connected to database!"));
@@ -36,6 +37,6 @@ app.use("/api/restaurant", restaurantRoute);
 app.use("/api/influencer", influencerRoute);
 app.use("/api/order", orderRoute);
 
-app.listen(7001, () => {
-  console.log("server started on localhost:7001");
+app.listen(PORT, () => {
+  console.log(`server started on localhost:${PORT}`);
 });
