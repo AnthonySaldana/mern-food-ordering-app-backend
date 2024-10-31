@@ -12,12 +12,16 @@ const macroSchema = new mongoose.Schema({
   fat: { type: Number }
 });
 
+export type MenuItem = InferSchemaType<typeof menuItemSchema>;
+
 const menuItemSchema = new mongoose.Schema({
   name: { type: String, required: true },
   price: { type: Number, required: true },
   ingredients: { type: String },
   calories: { type: Number },
-  macros: macroSchema
+  macros: macroSchema,
+  imageUrl: { type: String },
+  gallery: [{ type: String }],
 });
 
 export type SocialType = InferSchemaType<typeof socialSchema>;

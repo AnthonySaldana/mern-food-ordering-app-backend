@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import Influencer from "../models/influencer";
+import Influencer, { MenuItem } from "../models/influencer";
 import cloudinary from "cloudinary";
 import mongoose from "mongoose";
 import MealPlan from "../models/mealplan";
@@ -71,6 +71,22 @@ const updateInfluencer = async (req: Request, res: Response) => {
     if (req.file) {
       const imageUrl = await uploadImage(req.file as Express.Multer.File);
       influencer.imageUrl = imageUrl;
+    }
+
+    // Upload images for menu items if available
+    const menuItems: MenuItem[] = new Array<MenuItem>();
+    if (req.body.menuItems && req.body.menuItems.length > 0) {
+      for (const menuItem of req.body.menuItems) {
+        if (menuItem.file) {
+          try {
+            const uploadedImageUrl = await uploadImage(menuItem.file);
+            menuItems.push({ ...menuItem, imageUrl: uploadedImageUrl });
+          } catch (err) {
+            console.log("Error uploading menu item image:", err);
+          }
+        }
+      }
+      influencer.menuItems.push(...menuItems);
     }
 
     await influencer.save();
