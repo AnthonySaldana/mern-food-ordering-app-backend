@@ -34,7 +34,7 @@ const influencerSchema = new mongoose.Schema({
   country: { type: String, required: true },
   deliveryPrice: { type: Number, required: true },
   estimatedDeliveryTime: { type: Number, required: true },
-  socials: [socialSchema],
+  socialMediaHandles: [socialSchema],
   cuisines: [{ type: String, required: true }],
   menuItems: [menuItemSchema],
   mealPlans: [{ type: mongoose.Schema.Types.ObjectId, ref: "MealPlan" }],
