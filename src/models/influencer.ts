@@ -1,5 +1,5 @@
 import mongoose, { InferSchemaType } from "mongoose";
-import { MealPlanType } from "./mealplan";
+import MealPlan from "./mealplan";
 
 const socialSchema = new mongoose.Schema({
   platform: { type: String, required: true },
@@ -37,7 +37,7 @@ const influencerSchema = new mongoose.Schema({
   socialMediaHandles: [socialSchema],
   cuisines: [{ type: String, required: true }],
   menuItems: [menuItemSchema],
-  mealPlans: [{ type: mongoose.Schema.Types.ObjectId, ref: "MealPlan" }],
+  mealPlans: [{ type: mongoose.Schema.Types.ObjectId, ref: MealPlan }],
   imageUrl: { type: String },
   lastUpdated: { type: Date },
 });
