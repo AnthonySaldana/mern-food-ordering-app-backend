@@ -1,7 +1,24 @@
 import mongoose, { InferSchemaType } from "mongoose";
 import { MenuItem } from "./influencer";
 
-const mealPlanSchema = new mongoose.Schema({
+
+const macroSchema = new mongoose.Schema({
+  protein: { type: Number },
+  carbs: { type: Number }, 
+  fat: { type: Number }
+});
+
+const menuItemSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  price: { type: Number, required: true },
+  ingredients: { type: String },
+  calories: { type: Number },
+  macros: macroSchema,
+  imageUrl: { type: String },
+  gallery: [{ type: String }],
+});
+
+export const mealPlanSchema = new mongoose.Schema({
   _id: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
@@ -9,8 +26,7 @@ const mealPlanSchema = new mongoose.Schema({
   },
   name: { type: String, required: true },
   totalCalories: { type: Number, required: true },
-  menuItems: [{ type: mongoose.Schema.Types.ObjectId, ref: "MenuItem", required: true }],
-  influencer: { type: mongoose.Schema.Types.ObjectId, ref: "Influencer", required: true },
+  menuItems: { type: [menuItemSchema], default: [] },
   deliveryOptions: {
     type: [String],
     required: true,
