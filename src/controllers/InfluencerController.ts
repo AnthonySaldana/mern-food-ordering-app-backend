@@ -61,33 +61,54 @@ const updateInfluencer = async (req: Request, res: Response) => {
       user: req.userId,
     });
 
+    console.log("influencer", influencer?.mealPlans[0].menuItems[0]);
+
     if (!influencer) {
       return res.status(404).json({ message: "Influencer not found" });
     }
 
     Object.assign(influencer, req.body);
     influencer.lastUpdated = new Date();
-
-    if (req.file) {
-      const imageUrl = await uploadImage(req.file as Express.Multer.File);
-      influencer.imageUrl = imageUrl;
+    if (req.files && Array.isArray(req.files)) {
+      const imageFile = req.files.find(file => file.fieldname === 'imageFile');
+      if (imageFile) {
+        const imageUrl = await uploadImage(imageFile);
+        influencer.imageUrl = imageUrl;
+      }
     }
 
     // Upload images for menu items if available
-    const menuItems: MenuItem[] = new Array<MenuItem>();
-    if (req.body.menuItems && req.body.menuItems.length > 0) {
-      for (const menuItem of req.body.menuItems) {
-        if (menuItem.file) {
-          try {
-            const uploadedImageUrl = await uploadImage(menuItem.file);
-            menuItems.push({ ...menuItem, imageUrl: uploadedImageUrl });
-          } catch (err) {
-            console.log("Error uploading menu item image:", err);
+    // Upload images for menu items within meal plans if available
+    console.log("req", req);
+    console.log("req.body", req.body);
+    console.log("req.body", req.body.mealPlans[0]);
+    console.log("req.files", req.files);
+    const mealPlans = req.body.mealPlans || [];
+    for (let i = 0; i < mealPlans.length; i++) {
+      const mealPlan = mealPlans[i];
+      const menuItems = mealPlan.menuItems || [];
+
+      console.log("menuItems", menuItems);
+      
+      for (let j = 0; j < menuItems.length; j++) {
+        const menuItem = menuItems[j];
+        if (req.files && Array.isArray(req.files)) {
+          const imageFile = req.files?.find(file => file.fieldname === `mealPlans[${i}][menuItems][${j}][imageFile]`);
+
+          if (imageFile) {
+            try {
+              const uploadedImageUrl = await uploadImage(imageFile as Express.Multer.File);
+              menuItems[j] = { ...menuItem, imageUrl: uploadedImageUrl };
+              delete menuItems[j].imageFile;
+            } catch (err) {
+              console.log("Error uploading menu item image:", err);
+            }
           }
         }
       }
-      influencer.menuItems.push(...menuItems);
+      mealPlans[i].menuItems = menuItems;
     }
+    influencer.mealPlans = mealPlans;
 
     await influencer.save();
     res.status(200).send(influencer);

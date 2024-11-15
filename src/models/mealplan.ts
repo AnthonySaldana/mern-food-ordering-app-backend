@@ -1,5 +1,5 @@
 import mongoose, { InferSchemaType } from "mongoose";
-import { MenuItem } from "./influencer";
+// import { MenuItem } from "./influencer";
 
 
 const macroSchema = new mongoose.Schema({
@@ -26,7 +26,7 @@ export const mealPlanSchema = new mongoose.Schema({
   },
   name: { type: String, required: true },
   totalCalories: { type: Number, required: true },
-  menuItems: { type: [menuItemSchema], default: [] },
+  menuItems: [menuItemSchema],
   deliveryOptions: {
     type: [String],
     required: true,
@@ -37,7 +37,7 @@ export const mealPlanSchema = new mongoose.Schema({
   },
 });
 
-export type MenuItemType = MenuItem;
+// export type MenuItemType = MenuItem;
 export type MealPlanType = InferSchemaType<typeof mealPlanSchema>;
 
 export default mongoose.model("MealPlan", mealPlanSchema);
