@@ -61,7 +61,7 @@ const updateInfluencer = async (req: Request, res: Response) => {
       user: req.userId,
     });
 
-    console.log("influencer", influencer?.mealPlans[0].menuItems[0]);
+    console.log("influencer", influencer?.mealPlans[0]?.menuItems[0]);
 
     if (!influencer) {
       return res.status(404).json({ message: "Influencer not found" });
