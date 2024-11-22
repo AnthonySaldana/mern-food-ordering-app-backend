@@ -88,6 +88,19 @@ const updateInfluencer = async (req: Request, res: Response) => {
       const mealPlan = mealPlans[i];
       const menuItems = mealPlan.menuItems || [];
 
+      // Upload meal plan image if available
+      if (req.files && Array.isArray(req.files)) {
+        const mealPlanImageFile = req.files.find(file => file.fieldname === `mealPlans[${i}][imageFile]`);
+        if (mealPlanImageFile) {
+          try {
+            const uploadedImageUrl = await uploadImage(mealPlanImageFile as Express.Multer.File);
+            mealPlans[i].imageUrl = uploadedImageUrl;
+          } catch (err) {
+            console.log("Error uploading meal plan image:", err);
+          }
+        }
+      }
+
       console.log("menuItems", menuItems);
       
       for (let j = 0; j < menuItems.length; j++) {

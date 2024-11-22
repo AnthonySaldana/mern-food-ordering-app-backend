@@ -35,6 +35,7 @@ export const mealPlanSchema = new mongoose.Schema({
     type: [String],
     required: true,
   },
+  imageUrl: { type: String },
 });
 
 // export type MenuItemType = MenuItem;
