@@ -112,10 +112,13 @@ const updateInfluencer = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Influencer not found" });
     }
 
+    const existingInfluencer = JSON.parse(JSON.stringify(influencer));
+
     Object.assign(influencer, req.body);
     influencer.lastUpdated = new Date();
 
     if (req.files && Array.isArray(req.files)) {
+      console.log("update base image");
       const imageFile = req.files.find(file => file.fieldname === 'imageFile');
       if (imageFile) {
         const imageUrl = await uploadImage(imageFile);
@@ -126,14 +129,13 @@ const updateInfluencer = async (req: Request, res: Response) => {
     const mealPlans = req.body.mealPlans || [];
     for (let i = 0; i < mealPlans.length; i++) {
       const mealPlan = mealPlans[i];
-      const existingMealPlan = influencer.mealPlans[i] || {};
+      const existingMealPlan = existingInfluencer.mealPlans[i] || {};
       const menuItems = mealPlan.menuItems || [];
 
       mealPlans[i].imageUrl = existingMealPlan.imageUrl;
 
       if (req.files && Array.isArray(req.files)) {
         const mealPlanImageFile = req.files.find(file => file.fieldname === `mealPlans[${i}][imageFile]`);
-        console.log("mealPlanImageFile", mealPlanImageFile);
         if (mealPlanImageFile) {
           try {
             const uploadedImageUrl = await uploadImage(mealPlanImageFile as Express.Multer.File);
