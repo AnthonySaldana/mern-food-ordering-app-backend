@@ -32,43 +32,22 @@ const getInfluencerById = async (req: Request, res: Response) => {
 
 const createInfluencer = async (req: Request, res: Response) => {
   try {
-    const existingInfluencer = await Influencer.findOne({ user: req.userId });
-
-    if (existingInfluencer) {
-      return res
-        .status(409)
-        .json({ message: "User influencer already exists" });
-    }
-
-    const imageUrl = await uploadImage(req.file as Express.Multer.File);
-
-    const influencer = new Influencer(req.body);
-    influencer.imageUrl = imageUrl;
-    influencer.user = new mongoose.Types.ObjectId(req.userId);
-    influencer.lastUpdated = new Date();
-    await influencer.save();
-
-    res.status(201).send(influencer);
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Something went wrong" });
-  }
-};
-
-const updateInfluencer = async (req: Request, res: Response) => {
-  try {
-    const influencer = await Influencer.findOne({
+    // Check if influencer already exists
+    const existingInfluencer = await Influencer.findOne({
       user: req.userId,
     });
 
-    console.log("influencer", influencer?.mealPlans[0]?.menuItems[0]);
-
-    if (!influencer) {
-      return res.status(404).json({ message: "Influencer not found" });
+    if (existingInfluencer) {
+      return res.status(400).json({ message: "Influencer already exists" });
     }
 
-    Object.assign(influencer, req.body);
-    influencer.lastUpdated = new Date();
+    // Create new influencer
+    const influencer = new Influencer({
+      user: req.userId,
+      ...req.body,
+      lastUpdated: new Date()
+    });
+
     if (req.files && Array.isArray(req.files)) {
       const imageFile = req.files.find(file => file.fieldname === 'imageFile');
       if (imageFile) {
@@ -77,12 +56,6 @@ const updateInfluencer = async (req: Request, res: Response) => {
       }
     }
 
-    // Upload images for menu items if available
-    // Upload images for menu items within meal plans if available
-    console.log("req", req);
-    console.log("req.body", req.body);
-    console.log("req.body", req.body.mealPlans[0]);
-    console.log("req.files", req.files);
     const mealPlans = req.body.mealPlans || [];
     for (let i = 0; i < mealPlans.length; i++) {
       const mealPlan = mealPlans[i];
@@ -100,8 +73,6 @@ const updateInfluencer = async (req: Request, res: Response) => {
           }
         }
       }
-
-      console.log("menuItems", menuItems);
       
       for (let j = 0; j < menuItems.length; j++) {
         const menuItem = menuItems[j];
@@ -113,6 +84,78 @@ const updateInfluencer = async (req: Request, res: Response) => {
               const uploadedImageUrl = await uploadImage(imageFile as Express.Multer.File);
               menuItems[j] = { ...menuItem, imageUrl: uploadedImageUrl };
               delete menuItems[j].imageFile;
+            } catch (err) {
+              console.log("Error uploading menu item image:", err);
+            }
+          }
+        }
+      }
+      mealPlans[i].menuItems = menuItems;
+    }
+    influencer.mealPlans = mealPlans;
+
+    await influencer.save();
+    res.status(201).json(influencer);
+  } catch (error) {
+    console.log("error", error);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+const updateInfluencer = async (req: Request, res: Response) => {
+  try {
+    const influencer = await Influencer.findOne({
+      user: req.userId,
+    });
+
+    if (!influencer) {
+      return res.status(404).json({ message: "Influencer not found" });
+    }
+
+    Object.assign(influencer, req.body);
+    influencer.lastUpdated = new Date();
+
+    if (req.files && Array.isArray(req.files)) {
+      const imageFile = req.files.find(file => file.fieldname === 'imageFile');
+      if (imageFile) {
+        const imageUrl = await uploadImage(imageFile);
+        influencer.imageUrl = imageUrl;
+      }
+    }
+
+    const mealPlans = req.body.mealPlans || [];
+    for (let i = 0; i < mealPlans.length; i++) {
+      const mealPlan = mealPlans[i];
+      const existingMealPlan = influencer.mealPlans[i] || {};
+      const menuItems = mealPlan.menuItems || [];
+
+      mealPlans[i].imageUrl = existingMealPlan.imageUrl;
+
+      if (req.files && Array.isArray(req.files)) {
+        const mealPlanImageFile = req.files.find(file => file.fieldname === `mealPlans[${i}][imageFile]`);
+        console.log("mealPlanImageFile", mealPlanImageFile);
+        if (mealPlanImageFile) {
+          try {
+            const uploadedImageUrl = await uploadImage(mealPlanImageFile as Express.Multer.File);
+            mealPlans[i].imageUrl = uploadedImageUrl;
+          } catch (err) {
+            console.log("Error uploading meal plan image:", err);
+          }
+        }
+      }
+
+      for (let j = 0; j < menuItems.length; j++) {
+        const menuItem = menuItems[j];
+        const existingMenuItem = existingMealPlan.menuItems[j] || {};
+        menuItems[j].imageUrl = existingMenuItem.imageUrl; // Default to existing image URL
+
+        if (req.files && Array.isArray(req.files)) {
+          const imageFile = req.files?.find(file => file.fieldname === `mealPlans[${i}][menuItems][${j}][imageFile]`);
+
+          if (imageFile) {
+            try {
+              const uploadedImageUrl = await uploadImage(imageFile as Express.Multer.File);
+              menuItems[j] = { ...menuItem, imageUrl: uploadedImageUrl };
             } catch (err) {
               console.log("Error uploading menu item image:", err);
             }

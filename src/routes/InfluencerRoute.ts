@@ -17,6 +17,7 @@ const upload = multer({
 
 upload.fields([
   { name: "imageFile", maxCount: 1 }, // For the base influencer image
+  { name: 'mealPlans[0][imageFile]', maxCount: 1 },
   { name: 'mealPlans[0][menuItems][0][imageFile]', maxCount: 10 }
 ]);
 
@@ -63,9 +64,7 @@ router.get(
 
 router.post(
   "/",
-  upload.fields([
-    { name: "imageFile", maxCount: 1 },
-  ]),
+  upload.any(),
   validateInfluencerRequest,
   jwtCheck,
   jwtParse,
