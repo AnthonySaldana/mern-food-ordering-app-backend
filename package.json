@@ -4,7 +4,8 @@
   "description": "",
   "main": "./src/index.ts",
   "scripts": {
-    "dev": "concurrently \"nodemon\" \"npm run stripe\"",
+    "dev": "concurrently \"nodemon\"",
+    "prod": "concurrently \"nodemon\" \"npm run stripe\"",
     "stripe": "stripe listen --forward-to localhost:7000/api/order/checkout/webhook",
     "build": "npm install && npx tsc",
     "start": "node dist/index.js"
@@ -25,15 +26,13 @@
     "mongodb": "^6.3.0",
     "mongoose": "^8.1.0",
     "multer": "^1.4.5-lts.1",
-    "stripe": "^14.15.0"
-  },
-  "devDependencies": {
+    "stripe": "^14.15.0",
+    "typescript": "^5.3.3",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.11.5",
     "nodemon": "^3.0.3",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "ts-node": "^10.9.2"
   }
 }

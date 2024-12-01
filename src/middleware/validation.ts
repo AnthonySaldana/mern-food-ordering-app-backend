@@ -47,3 +47,9 @@ export const validateMyRestaurantRequest = [
     .withMessage("Menu item price is required and must be a postive number"),
   handleValidationErrors,
 ];
+
+export const validateInfluencerRequest = [
+  body("name").notEmpty().withMessage("Name is required"),
+  body("bio").notEmpty().withMessage("Bio is required"),
+  handleValidationErrors,
+];
