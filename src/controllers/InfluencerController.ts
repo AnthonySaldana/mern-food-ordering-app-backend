@@ -232,6 +232,8 @@ const searchInfluencer = async (req: Request, res: Response) => {
     let query: any = {};
 
     query["city"] = new RegExp(city, "i");
+    query["active"] = { $ne: false }; // Ensure active is not set to false
+
     const cityCheck = await Influencer.countDocuments(query);
     if (cityCheck === 0) {
       return res.status(404).json({
