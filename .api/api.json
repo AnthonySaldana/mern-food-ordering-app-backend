@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "apis": [
+    {
+      "identifier": "mealmeapi",
+      "source": "@mealmeapi/v3#5559vhm4c8za9z",
+      "integrity": "sha512-8rfmuQPMAF94wPBlOEONyK/SeBp9Cflt2gDNZBv4b2Ng6/n/nvYy7PJXnHDaiunDv4MORwiXdRIYw1RZofOhog==",
+      "installerVersion": "6.1.2"
+    }
+  ]
+}
