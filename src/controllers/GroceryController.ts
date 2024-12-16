@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import mealmeapi from '@api/mealmeapi';
 import { ShoppingListItemType, ShoppingListType, ShoppingList, ShoppingListItem } from '../models/grocery';
+import { Order } from '../models/order';
 
 const MEALME_API_KEY = process.env.MEALME_API_KEY as string;
 
@@ -172,22 +173,37 @@ const processGroceryOrder = async (orderData: any) => {
 
 const createGroceryOrder = async (req: Request, res: Response) => {
   try {
+    // Validate required fields
+    const { store_id, items, delivery_details, payment_details } = req.body;
+    
+    if (!store_id || !items || !delivery_details || !payment_details) {
+      return res.status(400).json({ 
+        message: 'Missing required fields: store_id, items, delivery_details, or payment_details' 
+      });
+    }
+
+    if (!payment_details.payment_method_id) {
+      return res.status(400).json({
+        message: 'Missing payment_method_id in payment_details'
+      });
+    }
+
     const orderData = {
-      store_id: req.body.store_id,
-      items: req.body.items.map((item: any) => ({
+      store_id,
+      items: items.map((item: any) => ({
         item_id: item.id,
         quantity: item.quantity,
         special_instructions: item.instructions
       })),
       delivery: {
-        address: req.body.delivery_details.address,
-        latitude: req.body.delivery_details.latitude,
-        longitude: req.body.delivery_details.longitude,
-        instructions: req.body.delivery_instructions
+        address: delivery_details.address,
+        latitude: delivery_details.latitude,
+        longitude: delivery_details.longitude,
+        instructions: delivery_details.instructions
       },
       payment: {
-        payment_method_id: req.body.payment_details.payment_method_id,
-        tip: req.body.tip_amount
+        payment_method_id: payment_details.payment_method_id,
+        tip: payment_details.tip_amount || 0
       },
       scheduled_time: req.body.scheduled_time || undefined,
       pickup: false,
@@ -197,6 +213,7 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       user_phone: 1234567890, // TODO: Get from authenticated user
       user_name: "Test User"
     };
+
     const response = await processGroceryOrder(orderData);
     res.json(response);
   } catch (error) {
@@ -325,4 +342,107 @@ const getStoreInventory = async (req: Request, res: Response) => {
   }
 };
 
-export { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList, createShoppingListOrder, getStoreInventory };
+const createOrder = async (req: Request, res: Response) => {
+  try {
+    const { store_id, items, delivery_details, place_order, final_quote } = req.body;
+    
+    mealmeapi.auth(MEALME_API_KEY);
+    
+    const orderResponse = await mealmeapi.post_order_v3({
+      store_id,
+      items,
+      delivery_details,
+      place_order,
+      final_quote,
+      pickup: false,
+      user_email: "test@example.com", // TODO: Get from user profile
+      user_id: "test123", // TODO: Get from user profile 
+      user_name: "Test User", // TODO: Get from user profile
+      user_phone: 1234567890 // TODO: Get from user profile
+    });
+
+    // Store order in our database
+    const order = new Order({
+      user: req.userId,
+      store_id,
+      items,
+      delivery_details,
+      mealme_order_id: orderResponse.data.order_id,
+      status: 'pending',
+      total: orderResponse.data.total,
+      subtotal: orderResponse.data.subtotal,
+      tax: orderResponse.data.tax,
+      delivery_fee: orderResponse.data.delivery_fee
+    });
+
+    await order.save();
+
+    res.json(orderResponse.data);
+  } catch (error) {
+    console.error('Error creating order:', error);
+    res.status(500).json({ message: 'Error creating order' });
+  }
+};
+
+const finalizeOrder = async (req: Request, res: Response) => {
+  try {
+    const { order_id } = req.body;
+    
+    mealmeapi.auth(MEALME_API_KEY);
+    
+    const response = await mealmeapi.post_confirm_order({
+      order_id
+    });
+
+    // Update order status in our database
+    await Order.findOneAndUpdate(
+      { mealme_order_id: order_id },
+      { status: 'confirmed' }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error finalizing order:', error);
+    res.status(500).json({ message: 'Error finalizing order' });
+  }
+};
+
+const createPaymentMethod = async (req: Request & { userId: string, user: { email: string } }, res: Response) => {
+  try {
+    mealmeapi.auth(MEALME_API_KEY);
+    
+    const { card_number, exp_month, exp_year, cvc } = req.body;
+    
+    const response = await mealmeapi.post_payment_create_v2({
+      user_id: req.userId,
+      user_email: req.user.email, // Get email from user object
+      card_number,
+      exp_month,
+      exp_year,
+      cvc
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error creating payment method:', error);
+    res.status(500).json({ message: 'Error creating payment method' });
+  }
+};
+
+const getPaymentMethods = async (req: Request & { userId: string, user: { email: string } }, res: Response) => {
+  try {
+    mealmeapi.auth(MEALME_API_KEY);
+    
+    const response = await mealmeapi.get_payment_list({
+      user_id: req.userId,
+      user_email: req.user.email // Get email from user object
+    });
+
+    res.json(response.data.payment_methods);
+  } catch (error) {
+    console.error('Error fetching payment methods:', error);
+    res.status(500).json({ message: 'Error fetching payment methods' });
+  }
+};
+
+export { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList, createShoppingListOrder, getStoreInventory, createOrder, finalizeOrder, createPaymentMethod, getPaymentMethods };
