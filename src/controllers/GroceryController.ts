@@ -74,6 +74,10 @@ const searchGroceryStores = async (req: Request, res: Response) => {
       longitude,
       budget,
       maximumMiles = 3,
+      open = false,
+      pickup = false,
+      sort = 'relevance',
+      search_focus = 'store'
     } = req.query;
 
     const response = await mealmeapi.get_search_store_v3({
@@ -83,11 +87,11 @@ const searchGroceryStores = async (req: Request, res: Response) => {
       store_type: 'grocery',
       budget: Number(budget),
       maximum_miles: Number(maximumMiles),
-      search_focus: 'store',
-      sort: 'relevance',
-      pickup: false,
+      search_focus: search_focus as string,
+      sort: sort as string,
+      pickup: pickup === 'true',
       fetch_quotes: false,
-      open: false,
+      open: open === 'true',
       default_quote: false,
       autocomplete: false,
       include_utc_hours: false,
@@ -404,9 +408,9 @@ const createGroceryOrder = async (req: Request, res: Response) => {
     await order.save();
 
     res.json(orderResponse.data);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating order:', error);
-    res.status(500).json({ message: 'Error creating order' });
+    res.status(500).json({ message: error?.data?.error || 'Error creating order' });
   }
 };
 
