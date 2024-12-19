@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import mealmeapi from '@api/mealmeapi';
 import { ShoppingListItemType, ShoppingListType, ShoppingList, ShoppingListItem } from '../models/grocery';
 import { Order } from '../models/order';
+import User, { UserRole } from '../models/user';
 
 const MEALME_API_KEY = process.env.MEALME_API_KEY as string;
 
@@ -171,7 +172,7 @@ const processGroceryOrder = async (orderData: any) => {
   return response.data;
 };
 
-const createGroceryOrder = async (req: Request, res: Response) => {
+const createGroceryOrderDepr = async (req: Request, res: Response) => {
   try {
     // Validate required fields
     const { store_id, items, delivery_details, payment_details } = req.body;
@@ -342,11 +343,13 @@ const getStoreInventory = async (req: Request, res: Response) => {
   }
 };
 
-const createOrder = async (req: Request, res: Response) => {
+const createGroceryOrder = async (req: Request, res: Response) => {
   try {
     const { store_id, items, delivery_details, place_order, final_quote } = req.body;
     
     mealmeapi.auth(MEALME_API_KEY);
+
+    console.log(delivery_details, 'delivery_details');
     
     const orderResponse = await mealmeapi.post_order_v3({
       store_id,
@@ -355,10 +358,33 @@ const createOrder = async (req: Request, res: Response) => {
       place_order,
       final_quote,
       pickup: false,
+      driver_tip_cents: delivery_details.tip_amount || 0,
+      pickup_tip_cents: 0,
+      user_latitude: delivery_details.latitude,
+      user_longitude: delivery_details.longitude,
+      user_street_num: delivery_details.street_num,
+      user_street_name: delivery_details.street_name,
+      user_city: delivery_details.city,
+      user_state: delivery_details.state,
+      user_country: delivery_details.country || 'US',
+      user_zipcode: delivery_details.zipcode,
+      user_dropoff_notes: delivery_details.instructions,
       user_email: "test@example.com", // TODO: Get from user profile
       user_id: "test123", // TODO: Get from user profile 
       user_name: "Test User", // TODO: Get from user profile
-      user_phone: 1234567890 // TODO: Get from user profile
+      user_phone: 1234567890, // TODO: Get from user profile
+      charge_user: true,
+      include_final_quote: true,
+      disable_sms: false,
+      email_receipt_specifications: {
+        prices_marked: false,
+        added_fee: {added_fee_flat: 0, added_fee_percent: 0},
+        unify_service_fee: false,
+        disable_email: false
+      },
+      favorited: false,
+      enable_substitution: false,
+      autofill_selected_options: false
     });
 
     // Store order in our database
@@ -407,35 +433,57 @@ const finalizeOrder = async (req: Request, res: Response) => {
   }
 };
 
-const createPaymentMethod = async (req: Request & { userId: string, user: { email: string } }, res: Response) => {
+const createPaymentMethod = async (req: Request, res: Response) => {
   try {
     mealmeapi.auth(MEALME_API_KEY);
     
-    const { card_number, exp_month, exp_year, cvc } = req.body;
+    const { card_number, exp_month, exp_year, cvc, email } = req.body;
     
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    // Find existing user or create new guest user
+    let user = await User.findOne({ email });
+    
+    if (!user) {
+      user = await User.create({
+        email,
+        role: UserRole.GUEST,
+        createdAt: new Date()
+      });
+    }
+
     const response = await mealmeapi.post_payment_create_v2({
-      user_id: req.userId,
-      user_email: req.user.email, // Get email from user object
+      user_id: user._id.toString(),
+      user_email: user.email,
       card_number,
       exp_month,
       exp_year,
       cvc
     });
 
-    res.json(response.data);
+    res.json({
+      ...response.data,
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role
+      }
+    });
   } catch (error) {
     console.error('Error creating payment method:', error);
     res.status(500).json({ message: 'Error creating payment method' });
   }
 };
 
-const getPaymentMethods = async (req: Request & { userId: string, user: { email: string } }, res: Response) => {
+const getPaymentMethods = async (req: Request, res: Response) => {
   try {
     mealmeapi.auth(MEALME_API_KEY);
     
     const response = await mealmeapi.get_payment_list({
       user_id: req.userId,
-      user_email: req.user.email // Get email from user object
+      user_email: req.userEmail // Get email from user object
     });
 
     res.json(response.data.payment_methods);
@@ -445,4 +493,4 @@ const getPaymentMethods = async (req: Request & { userId: string, user: { email:
   }
 };
 
-export { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList, createShoppingListOrder, getStoreInventory, createOrder, finalizeOrder, createPaymentMethod, getPaymentMethods };
+export { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList, createShoppingListOrder, getStoreInventory, finalizeOrder, createPaymentMethod, getPaymentMethods };
