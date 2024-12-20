@@ -95,6 +95,7 @@ const searchGroceryStores = async (req: Request, res: Response) => {
       default_quote: false,
       autocomplete: false,
       include_utc_hours: false,
+      // include_final_quote: false,
       projections: '_id,name,address,type,is_open',
       use_new_db: true
     });
@@ -303,6 +304,12 @@ const getStoreInventory = async (req: Request, res: Response) => {
       subcategory_id,
       latitude,
       longitude,
+      user_street_num,
+      user_street_name,
+      user_city,
+      user_state,
+      user_zipcode,
+      user_country
     } = req.query;
 
     const response = await mealmeapi.get_inventory_details_v3({
@@ -312,13 +319,16 @@ const getStoreInventory = async (req: Request, res: Response) => {
       user_longitude: Number(longitude),
       pickup: false,
       fetch_quotes: false,
-      user_street_num: "",
-      user_street_name: "",
-      user_city: "",
-      user_state: "",
-      user_zipcode: "",
-      user_country: "US"
+      user_street_num: user_street_num as string,
+      user_street_name: user_street_name as string,
+      user_city: user_city as string,
+      user_state: user_state as string,
+      user_zipcode: user_zipcode as string,
+      user_country: user_country as string,
+      include_quote: !subcategory_id // Only include final quote on first request when no subcategory is specified
     });
+
+    console.log(response.data, 'response.data');
 
     // Transform the response to a more usable format
     const inventory = {
@@ -337,7 +347,8 @@ const getStoreInventory = async (req: Request, res: Response) => {
           image: item.image,
           is_available: item.is_available
         }))
-      }))
+      })),
+      quote: response.data.quote || {}
     };
 
     res.json(inventory);
@@ -349,16 +360,14 @@ const getStoreInventory = async (req: Request, res: Response) => {
 
 const createGroceryOrder = async (req: Request, res: Response) => {
   try {
-    const { store_id, items, delivery_details, place_order, final_quote } = req.body;
+    const { store_id, items, delivery_details, place_order, final_quote, payment_details } = req.body;
     
     mealmeapi.auth(MEALME_API_KEY);
 
     console.log(delivery_details, 'delivery_details');
     
     const orderResponse = await mealmeapi.post_order_v3({
-      store_id,
       items,
-      delivery_details,
       place_order,
       final_quote,
       pickup: false,
@@ -388,29 +397,30 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       },
       favorited: false,
       enable_substitution: false,
-      autofill_selected_options: false
+      autofill_selected_options: false,
+      payment_method_id: payment_details.payment_method_id
     });
 
     // Store order in our database
-    const order = new Order({
-      user: req.userId,
-      store_id,
-      items,
-      delivery_details,
-      mealme_order_id: orderResponse.data.order_id,
-      status: 'pending',
-      total: orderResponse.data.total,
-      subtotal: orderResponse.data.subtotal,
-      tax: orderResponse.data.tax,
-      delivery_fee: orderResponse.data.delivery_fee
-    });
+    // const order = new Order({
+    //   user: req.userId,
+    //   store_id,
+    //   items,
+    //   delivery_details,
+    //   mealme_order_id: orderResponse.data.order_id,
+    //   status: 'pending',
+    //   total: orderResponse.data.total,
+    //   subtotal: orderResponse.data.subtotal,
+    //   tax: orderResponse.data.tax,
+    //   delivery_fee: orderResponse.data.delivery_fee
+    // });
 
-    await order.save();
+    // await order.save();
 
     res.json(orderResponse.data);
   } catch (error: any) {
     console.error('Error creating order:', error);
-    res.status(500).json({ message: error?.data?.error || 'Error creating order' });
+    res.status(500).json({ message: error?.data.error || 'Error creating order' });
   }
 };
 
@@ -442,6 +452,12 @@ const createPaymentMethod = async (req: Request, res: Response) => {
     mealmeapi.auth(MEALME_API_KEY);
     
     const { card_number, exp_month, exp_year, cvc, email } = req.body;
+
+    console.log(email, 'email');
+    console.log(card_number, 'card_number');
+    console.log(exp_month, 'exp_month');
+    console.log(exp_year, 'exp_year');
+    console.log(cvc, 'cvc');
     
     if (!email) {
       return res.status(400).json({ message: 'Email is required' });
@@ -461,10 +477,12 @@ const createPaymentMethod = async (req: Request, res: Response) => {
     const response = await mealmeapi.post_payment_create_v2({
       user_id: user._id.toString(),
       user_email: user.email,
-      card_number,
-      exp_month,
-      exp_year,
-      cvc
+      payment_method: {
+        card_number: parseInt(card_number),
+        expiration_month: exp_month,
+        expiration_year: exp_year,
+        cvc
+      }
     });
 
     res.json({
@@ -497,4 +515,24 @@ const getPaymentMethods = async (req: Request, res: Response) => {
   }
 };
 
-export { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList, createShoppingListOrder, getStoreInventory, finalizeOrder, createPaymentMethod, getPaymentMethods };
+const getCoordinatesFromAddress = async (req: Request, res: Response) => {
+  try {
+    mealmeapi.auth(MEALME_API_KEY);
+
+    const { address } = req.body;
+
+    const response = await mealmeapi.post_geocode_address_v2({
+      address: address
+    });
+
+    console.log(response.data, 'response.data');
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error getting coordinates:', error);
+    res.status(500).json({ message: 'Error getting coordinates' });
+  }
+};
+
+export { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList, createShoppingListOrder,
+  getStoreInventory, finalizeOrder, createPaymentMethod, getPaymentMethods, getCoordinatesFromAddress };

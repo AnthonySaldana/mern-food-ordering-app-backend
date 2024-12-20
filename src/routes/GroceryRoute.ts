@@ -1,5 +1,5 @@
 import express from 'express';
-import { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList, createShoppingListOrder, getStoreInventory, getPaymentMethods, createPaymentMethod } from '../controllers/GroceryController';
+import { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList, createShoppingListOrder, getStoreInventory, getPaymentMethods, createPaymentMethod, getCoordinatesFromAddress } from '../controllers/GroceryController';
 
 const router = express.Router();
 
@@ -12,5 +12,6 @@ router.post('/create-shopping-list-order', createShoppingListOrder);
 router.get('/inventory', getStoreInventory);
 router.get('/payment-methods', getPaymentMethods);
 router.post('/payment-methods', createPaymentMethod);
+router.post('/geocode-address', getCoordinatesFromAddress);
 
 export default router;
