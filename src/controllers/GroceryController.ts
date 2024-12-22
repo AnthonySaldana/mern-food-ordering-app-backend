@@ -392,7 +392,7 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       email_receipt_specifications: {
         prices_marked: false,
         added_fee: {added_fee_flat: 0, added_fee_percent: 0},
-        unify_service_fee: false,
+        unify_service_fee: true,
         disable_email: false
       },
       favorited: false,
