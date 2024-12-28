@@ -3,6 +3,9 @@ import mealmeapi from '@api/mealmeapi';
 import { ShoppingListItemType, ShoppingListType, ShoppingList, ShoppingListItem } from '../models/grocery';
 import { Order } from '../models/order';
 import User, { UserRole } from '../models/user';
+import { InventoryItem } from '../models/grocery';
+import inventoryQueue from '../queues/inventoryQueue';
+import OpenAI from "openai"
 
 const MEALME_API_KEY = process.env.MEALME_API_KEY as string;
 
@@ -72,8 +75,8 @@ const searchGroceryStores = async (req: Request, res: Response) => {
       query = '',
       latitude,
       longitude,
-      budget,
-      maximumMiles = 3,
+      budget = 100,
+      maximumMiles = 10,
       open = false,
       pickup = false,
       sort = 'relevance',
@@ -86,7 +89,7 @@ const searchGroceryStores = async (req: Request, res: Response) => {
       longitude: Number(longitude), 
       store_type: 'grocery',
       budget: Number(budget),
-      maximum_miles: Number(maximumMiles),
+      maximum_miles: 10,
       search_focus: search_focus as string,
       sort: sort as string,
       pickup: pickup === 'true',
@@ -96,9 +99,11 @@ const searchGroceryStores = async (req: Request, res: Response) => {
       autocomplete: false,
       include_utc_hours: false,
       // include_final_quote: false,
-      projections: '_id,name,address,type,is_open',
+      projections: '_id,name,address,type,is_open,miles',
       use_new_db: true
     });
+
+    console.log(response.data, 'response.data');
 
     res.json(response.data);
   } catch (error) {
@@ -116,7 +121,7 @@ const searchProducts = async (req: Request, res: Response) => {
       latitude,
       longitude,
       budget = 20,
-      maximumMiles = 1.5,
+      maximumMiles = 5,
       streetNum,
       streetName,
       city,
@@ -144,7 +149,8 @@ const searchProducts = async (req: Request, res: Response) => {
       maximum_miles: Number(maximumMiles),
       sale: false,
       autocomplete: true,
-      use_new_db: true
+      use_new_db: true,
+      store_type: 'grocery'
     });
 
     res.json(response.data);
@@ -325,7 +331,9 @@ const getStoreInventory = async (req: Request, res: Response) => {
       user_state: user_state as string,
       user_zipcode: user_zipcode as string,
       user_country: user_country as string,
-      include_quote: !subcategory_id // Only include final quote on first request when no subcategory is specified
+      // include_quote: !subcategory_id, // Only include final quote on first request when no subcategory is specified
+      include_quote: false,
+      use_new_db: true
     });
 
     console.log(response.data, 'response.data');
@@ -357,6 +365,128 @@ const getStoreInventory = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Error fetching store inventory' });
   }
 };
+
+const getFitbiteInventory = async (req: Request, res: Response) => {
+  try {
+    const { store_id, items } = req.query;
+
+    if (!store_id || !items) {
+      return res.status(400).json({ message: 'store_id and items are required' });
+    }
+
+    // Parse items array from query string
+    const searchItems = JSON.parse(items as string);
+
+    // Build query conditions
+    const conditions = searchItems.map((item: any) => {
+      const condition: any = {
+        name: { $regex: new RegExp(item.name, 'i') }
+      };
+
+      if (item.unit_of_measurement) {
+        condition.unit_of_measurement = item.unit_of_measurement;
+      }
+
+      if (item.unit_size) {
+        condition.unit_size = item.unit_size;
+      }
+
+      return condition;
+    });
+
+    // Find inventory items matching store and search conditions
+    const inventoryItems = await InventoryItem.find({
+      store_id: store_id,
+      $or: conditions
+    }).limit(searchItems.length);
+
+    // Prepare data for AI model
+    const dataForAI = {
+      searchItems,
+      inventoryItems
+    };
+
+    const openai = new OpenAI();
+    // Call OpenAI API to find best matches
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system", 
+          content: "You are a helpful assistant that matches grocery items based on names and attributes."
+        },
+        {
+          role: "user",
+          content: `Match the following search items with the best inventory 
+          items based on name and other attributes. Return the best matches in the following JSON format:
+          {
+            matches: [
+              {
+                ...name and _id from data
+              }
+            ]
+          }
+          ${JSON.stringify(dataForAI)}`
+        }
+      ],
+      temperature: 0.5,
+    });
+
+    const aiResponse = completion.choices[0];
+    console.log(aiResponse, 'aiResponse');
+
+    // Process AI response
+    let content = aiResponse.message.content || '{}';
+    if (content.startsWith('```json')) {
+      content = content.slice(7, -3); // Remove ```json from start and ``` from end
+    }
+    const parsedMatches = JSON.parse(content) || { matches: [] };
+    const bestMatches = parsedMatches.matches.map((match: any) => {
+      const inventoryItem = inventoryItems.find(item => item._id.toString() === match._id);
+      return {
+        ...match,
+        ...inventoryItem?.toObject()
+      };
+    });
+
+    console.log(bestMatches, 'bestMatches');
+
+    // Format response
+    // const inventory = {
+    //   store_id,
+    //   items: inventoryItems.map(item => ({
+    //     id: item.product_id,
+    //     name: item.name,
+    //     price: item.price,
+    //     unit_size: item.unit_size,
+    //     unit_of_measurement: item.unit_of_measurement,
+    //     description: item.description,
+    //     image: item.image,
+    //     is_available: item.is_available
+    //   }))
+    // };
+
+    // const inventory = {
+    //   store_id,
+    //   items: bestMatches?.matches.map((item: any) => ({
+    //     id: item._id,
+    //     name: item.name,
+    //     price: item.price,
+    //     unit_size: item.unit_size,
+    //     unit_of_measurement: item.unit_of_measurement,
+    //     description: item.description,
+    //     image: item.image,
+    //     is_available: item.is_available
+    //   }))
+    // };
+
+    res.json(bestMatches);
+  } catch (error) {
+    console.error('Error fetching inventory items:', error);
+    res.status(500).json({ message: 'Error fetching inventory items' });
+  }
+};
+
 
 const createGroceryOrder = async (req: Request, res: Response) => {
   try {
@@ -502,10 +632,25 @@ const createPaymentMethod = async (req: Request, res: Response) => {
 const getPaymentMethods = async (req: Request, res: Response) => {
   try {
     mealmeapi.auth(MEALME_API_KEY);
+
+    const { user_email } = req.query;
+
+    console.log(user_email, 'user_email');
     
+    if (!user_email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    // Find user in our database
+    const user = await User.findOne({ email: user_email });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     const response = await mealmeapi.get_payment_list({
-      user_id: req.userId,
-      user_email: req.userEmail // Get email from user object
+      user_id: user._id.toString(),
+      user_email: user_email as string
     });
 
     res.json(response.data.payment_methods);
@@ -534,5 +679,89 @@ const getCoordinatesFromAddress = async (req: Request, res: Response) => {
   }
 };
 
+const searchCart = async (req: Request, res: Response) => {
+  try {
+    mealmeapi.auth(MEALME_API_KEY);
+
+    const { query, latitude, longitude, maximumMiles = 5, user_street_num, user_street_name, user_city, user_state, user_zipcode, user_country } = req.query;
+
+    console.log(query, 'query');
+
+    if (typeof query !== 'string') {
+      return res.status(400).json({ message: 'Query must be a string' });
+    }
+
+    const queryObject: any = query?.split(',').reduce((acc: any, item: string) => ({
+      ...acc,
+      ["" + item + ""]: 1
+    }), {});
+
+    console.log(queryObject, 'queryObject');
+    console.log(latitude, 'latitude');
+    console.log(longitude, 'longitude');
+    console.log(maximumMiles, 'maximumMiles');
+
+    const response = await mealmeapi.get_search_cart({
+      query: queryObject,
+      user_latitude: Number(latitude),
+      user_longitude: Number(longitude),
+      user_street_num: user_street_num as string,
+      user_street_name: user_street_name as string,
+      user_city: user_city as string,
+      user_state: user_state as string,
+      user_zipcode: user_zipcode as string,
+      user_country: user_country as string,
+      maximum_miles: Number(maximumMiles),
+      pickup: false,
+      fetch_quotes: false,
+      sort: 'relevance',
+      use_new_db: true,
+      full_carts_only: false,
+      open: false,
+      default_quote: false,
+      autocomplete: false,
+      include_utc_hours: false,
+      include_final_quote: false,
+      store_type: 'grocery'
+    });
+
+    console.log(response.data, 'response.data');
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error searching cart:', error);
+    res.status(500).json({ message: 'Error searching cart' });
+  }
+};
+
+const processStoreInventory = async (req: Request, res: Response) => {
+  try {
+    const { store_id, latitude, longitude, user_street_num, user_street_name, user_city, user_state, user_zipcode, user_country } = req.body;
+
+    if (!store_id) {
+      return res.status(400).json({ message: 'Store ID is required' });
+    }
+
+    // Add job to the queue
+    await inventoryQueue.add({
+      store_id,
+      latitude,
+      longitude,
+      user_street_num,
+      user_street_name,
+      user_city,
+      user_state,
+      user_zipcode,
+      user_country
+    });
+
+    res.json({ message: 'Inventory processing job added to the queue' });
+  } catch (error) {
+    console.error('Error queuing store inventory processing:', error);
+    res.status(500).json({ message: 'Error queuing store inventory processing' });
+  }
+};
+
 export { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList, createShoppingListOrder,
-  getStoreInventory, finalizeOrder, createPaymentMethod, getPaymentMethods, getCoordinatesFromAddress };
+  getStoreInventory, finalizeOrder, createPaymentMethod, getPaymentMethods, getCoordinatesFromAddress, searchCart, processStoreInventory,
+  getFitbiteInventory };
