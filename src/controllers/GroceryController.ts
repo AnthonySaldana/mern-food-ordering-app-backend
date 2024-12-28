@@ -83,6 +83,15 @@ const searchGroceryStores = async (req: Request, res: Response) => {
       search_focus = 'store'
     } = req.query;
 
+    // Validate required parameters
+    if (!latitude || !longitude || latitude === '0' || longitude === '0') {
+      console.warn('Missing required parameters for grocery store search');
+      return res.status(400).json({ 
+        warning: true,
+        message: 'Latitude and longitude are required parameters'
+      });
+    }
+
     const response = await mealmeapi.get_search_store_v3({
       query: query as string,
       latitude: Number(latitude),
@@ -107,8 +116,11 @@ const searchGroceryStores = async (req: Request, res: Response) => {
 
     res.json(response.data);
   } catch (error) {
-    console.error('Error searching grocery stores:', error);
-    res.status(500).json({ message: 'Error searching grocery stores' });
+    console.warn('Error searching grocery stores:', error);
+    res.status(400).json({ 
+      warning: true,
+      message: error instanceof Error ? error.message : 'An unknown error occurred while searching grocery stores'
+    });
   }
 };
 
