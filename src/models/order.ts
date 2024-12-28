@@ -4,10 +4,16 @@ const orderSchema = new mongoose.Schema({
   restaurant: { type: mongoose.Schema.Types.ObjectId, ref: "Restaurant" },
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   deliveryDetails: {
-    email: { type: String, required: true },
-    name: { type: String, required: true },
-    addressLine1: { type: String, required: true },
+    latitude: { type: Number, required: true },
+    longitude: { type: Number, required: true },
+    street_num: { type: String, required: true },
+    street_name: { type: String, required: true },
     city: { type: String, required: true },
+    state: { type: String, required: true },
+    country: { type: String, default: 'US' },
+    zipcode: { type: String, required: true },
+    instructions: { type: String },
+    tip_amount: { type: Number, default: 0 }
   },
   cartItems: [
     {
@@ -24,5 +30,4 @@ const orderSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-const Order = mongoose.model("Order", orderSchema);
-export default Order;
+export const Order = mongoose.model("Order", orderSchema);

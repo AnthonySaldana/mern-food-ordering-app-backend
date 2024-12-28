@@ -8,6 +8,7 @@ import myRestaurantRoute from "./routes/MyRestaurantRoute";
 import restaurantRoute from "./routes/RestaurantRoute";
 import orderRoute from "./routes/OrderRoute";
 import influencerRoute from "./routes/InfluencerRoute";
+import groceryRoute from "./routes/GroceryRoute";
 const PORT = process.env.PORT || 7000;
 mongoose
   .connect(process.env.MONGODB_CONNECTION_STRING as string)
@@ -52,6 +53,7 @@ app.use("/api/my/restaurant", myRestaurantRoute);
 app.use("/api/restaurant", restaurantRoute);
 app.use("/api/influencer", influencerRoute);
 app.use("/api/order", orderRoute);
+app.use("/api/grocery", groceryRoute);
 
 app.listen(PORT, () => {
   console.log(`server started on localhost:${PORT}`);
