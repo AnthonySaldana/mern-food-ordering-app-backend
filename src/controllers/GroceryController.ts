@@ -410,7 +410,7 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
     const inventoryItems = await InventoryItem.find({
       store_id: store_id,
       $or: conditions
-    }).limit(searchItems.length);
+    }).limit(20);
 
     // Prepare data for AI model
     const dataForAI = {
