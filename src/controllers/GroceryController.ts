@@ -429,7 +429,7 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
         },
         {
           role: "user",
-          content: `Match the following search items with the best inventory 
+          content: `Match the following search items with the best inventory. Only return 1 match for each search item.
           items based on name and other attributes. Return the best matches in the following JSON format:
           {
             matches: [
