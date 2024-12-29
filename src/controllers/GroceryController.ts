@@ -441,7 +441,7 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
           ${JSON.stringify(dataForAI)}`
         }
       ],
-      temperature: 0.5,
+      temperature: 0.3,
     });
 
     const aiResponse = completion.choices[0];
@@ -492,7 +492,7 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
     //   }))
     // };
 
-    res.json(bestMatches);
+    res.json({ matches: bestMatches });
   } catch (error) {
     console.error('Error fetching inventory items:', error);
     res.status(500).json({ message: 'Error fetching inventory items' });
