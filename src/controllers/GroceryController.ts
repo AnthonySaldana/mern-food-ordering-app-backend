@@ -162,7 +162,8 @@ const searchGroceryStores = async (req: Request, res: Response) => {
     const filteredResponse = {
       ...response.data,
       stores: response.data.stores.filter((store: any) => 
-        groceryStoreIds.includes(store._id)
+        groceryStoreIds.includes(store._id) && 
+        !store.name.toLowerCase().includes('liquor')
       )
     };
 
