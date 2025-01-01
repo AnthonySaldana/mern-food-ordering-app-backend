@@ -74,13 +74,19 @@ const searchGroceryStores = async (req: Request, res: Response) => {
     const {
       query = '',
       latitude,
-      longitude,
+      longitude, 
       budget = 100,
       maximumMiles = 10,
       open = false,
       pickup = false,
       sort = 'relevance',
-      search_focus = 'store'
+      search_focus = 'store',
+      user_street_num = '123',
+      user_street_name = 'Main St',
+      user_city = 'Anytown',
+      user_state = 'CA',
+      user_zipcode = '12345',
+      user_country = 'US'
     } = req.query;
 
     // Validate required parameters
@@ -95,26 +101,73 @@ const searchGroceryStores = async (req: Request, res: Response) => {
     const response = await mealmeapi.get_search_store_v3({
       query: query as string,
       latitude: Number(latitude),
-      longitude: Number(longitude), 
-      store_type: 'grocery',
+      longitude: Number(longitude),
+      store_type: 'grocery', 
       budget: Number(budget),
       maximum_miles: 10,
       search_focus: search_focus as string,
       sort: sort as string,
       pickup: pickup === 'true',
-      fetch_quotes: false,
+      fetch_quotes: true,
       open: open === 'true',
       default_quote: false,
       autocomplete: false,
       include_utc_hours: false,
-      // include_final_quote: false,
       projections: '_id,name,address,type,is_open,miles',
-      use_new_db: true
+      use_new_db: true,
+      user_street_num: user_street_num as string,
+      user_street_name: user_street_name as string,
+      user_city: user_city as string,
+      user_state: user_state as string,
+      user_zipcode: user_zipcode as string,
+      user_country: user_country as string
     });
 
-    console.log(response.data, 'response.data');
+    // Extract store info to analyze with GPT
+    const storeList = response.data.stores.map((store: any) => ({
+      id: store._id,
+      name: store.name,
+      type: store.type,
+      address: store.address
+    }));
 
-    res.json(response.data);
+    // Call OpenAI API to analyze stores
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+
+    const gptResponse = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are helping identify true grocery stores from a list of stores. Return only an array of store IDs as json that you determine to be actual grocery stores, excluding convenience stores, gas stations, etc."
+        },
+        {
+          role: "user", 
+          content: JSON.stringify(storeList)
+        }
+      ],
+      temperature: 0,
+      response_format: { type: "json_object" }
+    });
+
+    const groceryStoreIds = JSON.parse(gptResponse.choices[0].message.content!)?.store_ids;
+
+    console.log(groceryStoreIds, 'groceryStoreIds');
+    console.log(response.data, 'response.data');
+    console.log(response.data.stores, 'response.data.stores');
+
+    // Filter original response to only include identified grocery stores
+    const filteredResponse = {
+      ...response.data,
+      stores: response.data.stores.filter((store: any) => 
+        groceryStoreIds.includes(store._id)
+      )
+    };
+
+    res.json(filteredResponse);
+
   } catch (error) {
     console.warn('Error searching grocery stores:', error);
     res.status(400).json({ 
