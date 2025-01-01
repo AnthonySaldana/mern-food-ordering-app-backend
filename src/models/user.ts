@@ -24,7 +24,6 @@ interface User {
 const userSchema = new mongoose.Schema({
   auth0Id: {
     type: String,
-    required: true,
   },
   email: {
     type: String,
