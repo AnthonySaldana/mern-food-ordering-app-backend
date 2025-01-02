@@ -141,7 +141,9 @@ const searchGroceryStores = async (req: Request, res: Response) => {
       messages: [
         {
           role: "system",
-          content: "You are helping identify true grocery stores from a list of stores. Return only an array of store IDs as json that you determine to be actual grocery stores, excluding convenience stores, gas stations, etc."
+          content: `You are helping identify true grocery stores from a list of stores.
+          Return only an array of store IDs as json that you determine to be actual grocery stores, excluding convenience stores, gas stations, etc.
+          Don't filter out the following stores: target`
         },
         {
           role: "user", 
@@ -813,19 +815,6 @@ const processStoreInventory = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Store ID is required' });
     }
 
-    // Add job to the queue
-    await inventoryQueue.add({
-      store_id,
-      latitude,
-      longitude,
-      user_street_num,
-      user_street_name,
-      user_city,
-      user_state,
-      user_zipcode,
-      user_country
-    });
-
     console.log("Processing inventory job for store: ", store_id);
     mealmeapi.auth(process.env.MEALME_API_KEY as string);
 
@@ -844,6 +833,23 @@ const processStoreInventory = async (req: Request, res: Response) => {
       user_country: user_country as string,
       quote_preference: 'default'
     });
+
+    console.log(response, 'response.data from grocery controller');
+
+    // Only add to queue if MealMe call succeeded
+    if (response?.data) {
+      await inventoryQueue.add({
+        store_id,
+        latitude,
+        longitude,
+        user_street_num,
+        user_street_name,
+        user_city,
+        user_state,
+        user_zipcode,
+        user_country
+      });
+    }
 
     res.json(response.data);
   } catch (error) {
