@@ -108,7 +108,7 @@ const searchGroceryStores = async (req: Request, res: Response) => {
       search_focus: search_focus as string,
       sort: sort as string,
       pickup: pickup === 'true',
-      fetch_quotes: true,
+      fetch_quotes: false,
       open: open === 'true',
       default_quote: false,
       autocomplete: false,
@@ -464,18 +464,23 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
     const inventoryItems = await InventoryItem.find({
       store_id: store_id,
       $or: conditions
-    }).limit(20);
+    }).limit(75);
 
-    // Prepare data for AI model
+    // Prepare trimmed data for AI model
     const dataForAI = {
       searchItems,
-      inventoryItems
+      inventoryItems: inventoryItems.map(item => ({
+        _id: item._id,
+        name: item.name
+      }))
     };
+
+    console.log(dataForAI, 'dataForAI');
 
     const openai = new OpenAI();
     // Call OpenAI API to find best matches
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       messages: [
         {
           role: "system", 
@@ -567,7 +572,7 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       place_order,
       final_quote,
       pickup: false,
-      driver_tip_cents: delivery_details.tip_amount || 0,
+      driver_tip_cents: delivery_details.tip_amount * 10 || 0,
       pickup_tip_cents: 0,
       user_latitude: delivery_details.latitude,
       user_longitude: delivery_details.longitude,
@@ -578,22 +583,22 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       user_country: delivery_details.country || 'US',
       user_zipcode: delivery_details.zipcode,
       user_dropoff_notes: delivery_details.instructions,
-      user_email: "test@example.com", // TODO: Get from user profile
+      user_email: delivery_details.user_email || 'admin@fitbite.app', // TODO: Get from user profile
       user_id: "test123", // TODO: Get from user profile 
       user_name: "Test User", // TODO: Get from user profile
-      user_phone: 1234567890, // TODO: Get from user profile
+      user_phone: 5622043228, // TODO: Get from user profile
       charge_user: true,
       include_final_quote: true,
       disable_sms: false,
       email_receipt_specifications: {
         prices_marked: false,
-        added_fee: {added_fee_flat: 2000, added_fee_percent: 0},
+        added_fee: {added_fee_flat: 200, added_fee_percent: 0},
         unify_service_fee: true,
         disable_email: false
       },
       favorited: false,
-      enable_substitution: false,
-      autofill_selected_options: false,
+      enable_substitution: true,
+      autofill_selected_options: true,
       payment_method_id: payment_details.payment_method_id
     });
 
@@ -821,7 +826,26 @@ const processStoreInventory = async (req: Request, res: Response) => {
       user_country
     });
 
-    res.json({ message: 'Inventory processing job added to the queue' });
+    console.log("Processing inventory job for store: ", store_id);
+    mealmeapi.auth(process.env.MEALME_API_KEY as string);
+
+    const response = await mealmeapi.get_inventory_details_v3({
+      store_id: store_id as string,
+      user_latitude: Number(latitude),
+      user_longitude: Number(longitude),
+      pickup: false,
+      include_quote: true,
+      use_new_db: true,
+      user_street_num: user_street_num as string,
+      user_street_name: user_street_name as string,
+      user_city: user_city as string,
+      user_state: user_state as string,
+      user_zipcode: user_zipcode as string,
+      user_country: user_country as string,
+      quote_preference: 'default'
+    });
+
+    res.json(response.data);
   } catch (error) {
     console.error('Error queuing store inventory processing:', error);
     res.status(500).json({ message: 'Error queuing store inventory processing' });
