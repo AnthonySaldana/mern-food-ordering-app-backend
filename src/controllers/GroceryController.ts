@@ -143,7 +143,7 @@ const searchGroceryStores = async (req: Request, res: Response) => {
           role: "system",
           content: `You are helping identify true grocery stores from a list of stores.
           Return only an array of store IDs as json that you determine to be actual grocery stores, excluding convenience stores, gas stations, etc.
-          Don't filter out the following stores: target`
+          Don't filter out the following stores: target, aldi`
         },
         {
           role: "user", 
