@@ -109,7 +109,7 @@ const searchGroceryStores = async (req: Request, res: Response) => {
       sort: sort as string,
       pickup: pickup === 'true',
       fetch_quotes: false,
-      open: open === 'true',
+      open: false, //open === 'true',
       default_quote: false,
       autocomplete: false,
       include_utc_hours: false,
@@ -470,8 +470,12 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
 
     // Prepare trimmed data for AI model
     const dataForAI = {
-      searchItems,
-      inventoryItems: inventoryItems.map(item => ({
+      searchItems: searchItems.map((item: any) => ({
+        name: item.name,
+        positiveDescriptors: item.positiveDescriptors,
+        negativeDescriptors: item.negativeDescriptors
+      })),
+      inventoryItems: inventoryItems.map((item: any) => ({
         _id: item._id,
         name: item.name
       }))
@@ -491,6 +495,8 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
         {
           role: "user",
           content: `Match the following search items with the best inventory. Only return 1 match for each search item.
+          The search items have positive and negative descriptors that you should use to match the inventory items.
+          Do not include items that have matching negative descriptors. Include items that have matching positive descriptors.
           items based on name and other attributes. Return the best matches in the following JSON format:
           {
             matches: [
