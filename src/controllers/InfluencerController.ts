@@ -262,7 +262,7 @@ const searchInfluencer = async (req: Request, res: Response) => {
       ];
     }
 
-    const pageSize = 10;
+    const pageSize = 20;
     const skip = (page - 1) * pageSize;
 
     const influencers = await Influencer.find(query)
