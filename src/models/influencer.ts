@@ -22,6 +22,8 @@ export const menuItemSchema = new mongoose.Schema({
   macros: macroSchema,
   imageUrl: { type: String },
   gallery: [{ type: String }],
+  positiveDescriptors: { type: String },
+  negativeDescriptors: { type: String },
 });
 
 export type SocialType = InferSchemaType<typeof socialSchema>;
