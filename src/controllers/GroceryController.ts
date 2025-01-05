@@ -569,7 +569,7 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
 
 const createGroceryOrder = async (req: Request, res: Response) => {
   try {
-    const { store_id, items, delivery_details, place_order, final_quote, payment_details } = req.body;
+    const { store_id, items, delivery_details, place_order, final_quote, payment_details, influencer_id, meal_plan_name } = req.body;
     
     mealmeapi.auth(MEALME_API_KEY);
 
@@ -611,20 +611,22 @@ const createGroceryOrder = async (req: Request, res: Response) => {
     });
 
     // Store order in our database
-    // const order = new Order({
-    //   user: req.userId,
-    //   store_id,
-    //   items,
-    //   delivery_details,
-    //   mealme_order_id: orderResponse.data.order_id,
-    //   status: 'pending',
-    //   total: orderResponse.data.total,
-    //   subtotal: orderResponse.data.subtotal,
-    //   tax: orderResponse.data.tax,
-    //   delivery_fee: orderResponse.data.delivery_fee
-    // });
+    const order = new Order({
+      user: req.userId,
+      store_id,
+      items,
+      delivery_details,
+      mealme_order_id: orderResponse.data.order_id,
+      status: 'pending',
+      total: orderResponse.data.total,
+      subtotal: orderResponse.data.subtotal,
+      tax: orderResponse.data.tax,
+      delivery_fee: orderResponse.data.delivery_fee,
+      influencer_id, // Add influencer reference
+      meal_plan_name // Add meal plan name for reference
+    });
 
-    // await order.save();
+    await order.save();
 
     res.json(orderResponse.data);
   } catch (error: any) {
