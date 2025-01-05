@@ -1,8 +1,11 @@
 import mongoose from "mongoose";
+import Influencer from "./influencer";
 
 const orderSchema = new mongoose.Schema({
   restaurant: { type: mongoose.Schema.Types.ObjectId, ref: "Restaurant" },
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  influencer: { type: mongoose.Schema.Types.ObjectId, ref: "Influencer" },
+  meal_plan_name: { type: String, required: true },
   deliveryDetails: {
     latitude: { type: Number, required: true },
     longitude: { type: Number, required: true },
