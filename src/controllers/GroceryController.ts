@@ -473,7 +473,8 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
       searchItems: searchItems.map((item: any) => ({
         name: item.name,
         positiveDescriptors: item.positiveDescriptors,
-        negativeDescriptors: item.negativeDescriptors
+        negativeDescriptors: item.negativeDescriptors,
+        quantity: item.quantity
       })),
       inventoryItems: inventoryItems.map((item: any) => ({
         _id: item._id,
@@ -494,14 +495,15 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
         },
         {
           role: "user",
-          content: `Match the following search items with the best inventory. Only return 1 match for each search item.
-          The search items have positive and negative descriptors that you should use to match the inventory items.
+          content: `Match the following search items with the best inventory and determine the appropriate quantity for each item.
+          Only return 1 match for each search item. The search items have positive and negative descriptors that you should use to match the inventory items.
           Do not include items that have matching negative descriptors. Include items that have matching positive descriptors.
           items based on name and other attributes. Return the best matches in the following JSON format:
           {
             matches: [
               {
                 ...name and _id from data
+                adjusted_quantity: number // the quantity determied by AI
               }
             ]
           }
@@ -517,14 +519,16 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
     // Process AI response
     let content = aiResponse.message.content || '{}';
     if (content.startsWith('```json')) {
-      content = content.slice(7, -3); // Remove ```json from start and ``` from end
+      // TODO: Use gpt json response mode instead of this
+      content = content.slice(7, -3);
     }
     const parsedMatches = JSON.parse(content) || { matches: [] };
     const bestMatches = parsedMatches.matches.map((match: any) => {
       const inventoryItem = inventoryItems.find(item => item._id.toString() === match._id);
       return {
         ...match,
-        ...inventoryItem?.toObject()
+        ...inventoryItem?.toObject(),
+        adjusted_quantity: match.adjusted_quantity
       };
     });
 
@@ -569,7 +573,7 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
 
 const createGroceryOrder = async (req: Request, res: Response) => {
   try {
-    const { store_id, items, delivery_details, place_order, final_quote, payment_details, influencer_id, meal_plan_name } = req.body;
+    const { store_id, items, delivery_details, place_order, final_quote, payment_details, influencer_id, meal_plan_name, plan_start_day } = req.body;
     
     mealmeapi.auth(MEALME_API_KEY);
 
@@ -623,7 +627,8 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       tax: orderResponse.data.tax,
       delivery_fee: orderResponse.data.delivery_fee,
       influencer_id, // Add influencer reference
-      meal_plan_name // Add meal plan name for reference
+      meal_plan_name, // Add meal plan name for reference
+      plan_start_day
     });
 
     await order.save();
@@ -709,6 +714,74 @@ const createPaymentMethod = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Error creating payment method' });
   }
 };
+
+const createAddress = async (req: Request, res: Response) => {
+  try {
+    mealmeapi.auth(MEALME_API_KEY);
+    
+    const { email, latitude, longitude, streetNum, streetName, city, state, zipcode, country } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
+
+    // Find existing user or create new guest user
+    let user = await User.findOne({ email });
+    
+    if (!user) {
+      user = await User.create({
+        email,
+        role: UserRole.GUEST,
+        createdAt: new Date()
+      });
+    }
+
+    // Create new address object
+    const newAddress = {
+      latitude,
+      longitude, 
+      streetNum,
+      streetName,
+      city,
+      state,
+      zipcode,
+      country
+    };
+
+    // Add address to user's addresses array if it doesn't exist
+    const addressExists = user.addresses.some(addr => 
+      addr.latitude === latitude &&
+      addr.longitude === longitude &&
+      addr.streetNum === streetNum &&
+      addr.streetName === streetName &&
+      addr.city === city &&
+      addr.state === state &&
+      addr.zipcode === zipcode &&
+      addr.country === country
+    );
+
+    if (!addressExists) {
+      user.addresses.push(newAddress);
+      await user.save();
+    }
+
+    res.json({
+      success: true,
+      address: newAddress,
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        addresses: user.addresses
+      }
+    });
+
+  } catch (error) {
+    console.error('Error creating address:', error);
+    res.status(500).json({ message: 'Error creating address' });
+  }
+};
+
 
 const getPaymentMethods = async (req: Request, res: Response) => {
   try {
@@ -866,6 +939,19 @@ const processStoreInventory = async (req: Request, res: Response) => {
   }
 };
 
+const getAddresses = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.query;
+
+    const user = await User.findOne({ email });
+
+    res.json(user?.addresses);
+  } catch (error) {
+    console.error('Error getting addresses:', error);
+    res.status(500).json({ message: 'Error getting addresses' });
+  }
+};
+
 export { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList, createShoppingListOrder,
   getStoreInventory, finalizeOrder, createPaymentMethod, getPaymentMethods, getCoordinatesFromAddress, searchCart, processStoreInventory,
-  getFitbiteInventory };
+  getFitbiteInventory, createAddress, getAddresses };
