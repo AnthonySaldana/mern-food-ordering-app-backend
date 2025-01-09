@@ -436,17 +436,21 @@ const getStoreInventory = async (req: Request, res: Response) => {
 
 const getFitbiteInventory = async (req: Request, res: Response) => {
   try {
-    const { store_id, items } = req.query;
+    const { store_id, items } = req.body;
 
     if (!store_id || !items) {
       return res.status(400).json({ message: 'store_id and items are required' });
     }
 
+    console.log(store_id, items, 'store_id and items');
+
     // Parse items array from query string
-    const searchItems = JSON.parse(items as string);
+    // const searchItems = JSON.parse(items as string);
+
+    console.log(items, 'searchItems');
 
     // Build query conditions
-    const conditions = searchItems.map((item: any) => {
+    const conditions = items.map((item: any) => {
       const condition: any = {
         name: { $regex: new RegExp(item.name, 'i') }
       };
@@ -470,7 +474,7 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
 
     // Prepare trimmed data for AI model
     const dataForAI = {
-      searchItems: searchItems.map((item: any) => ({
+      searchItems: items.map((item: any) => ({
         name: item.name,
         positiveDescriptors: item.positiveDescriptors,
         negativeDescriptors: item.negativeDescriptors,
