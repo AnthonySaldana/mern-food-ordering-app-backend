@@ -1,4 +1,4 @@
-import mongoose, { InferSchemaType } from "mongoose";
+import mongoose, { InferSchemaType, Schema, Document } from "mongoose";
 import { mealPlanSchema } from "./mealplan";
 
 const socialSchema = new mongoose.Schema({
@@ -28,6 +28,13 @@ export const menuItemSchema = new mongoose.Schema({
 
 export type SocialType = InferSchemaType<typeof socialSchema>;
 
+interface Influencer extends Document {
+  name: string;
+  bio: string;
+  mealPlans: Array<Schema.Types.ObjectId>;
+  recipes: Array<Schema.Types.ObjectId>; // New field
+}
+
 const influencerSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   name: { type: String, required: true },
@@ -42,7 +49,7 @@ const influencerSchema = new mongoose.Schema({
   mealPlans: [mealPlanSchema],
   imageUrl: { type: String },
   lastUpdated: { type: Date },
+  recipes: [{ type: Schema.Types.ObjectId, ref: 'Recipe' }]
 });
 
-const Influencer = mongoose.model("Influencer", influencerSchema);
-export default Influencer;
+export default mongoose.model("Influencer", influencerSchema);

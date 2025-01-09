@@ -8,6 +8,17 @@ export enum UserRole {
   USER = 'user'
 }
 
+interface Address {
+  latitude: number;
+  longitude: number;
+  streetNum: string;
+  streetName: string;
+  city: string;
+  state: string;
+  zipcode: string;
+  country: string;
+}
+
 interface User {
   _id: string;
   auth0Id: string;
@@ -16,10 +27,22 @@ interface User {
   addressLine1?: string;
   city?: string;
   country?: string;
+  addresses: Address[];
   role: UserRole;
   createdAt: Date;
   updatedAt: Date;
 }
+
+const addressSchema = new mongoose.Schema({
+  latitude: Number,
+  longitude: Number,
+  streetNum: String,
+  streetName: String,
+  city: String,
+  state: String,
+  zipcode: String,
+  country: String,
+});
 
 const userSchema = new mongoose.Schema({
   auth0Id: {
@@ -41,6 +64,7 @@ const userSchema = new mongoose.Schema({
   country: {
     type: String,
   },
+  addresses: [addressSchema],
   role: {
     type: String,
     enum: Object.values(UserRole),
