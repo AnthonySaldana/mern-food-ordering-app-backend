@@ -17,7 +17,7 @@ router.post('/payment-methods', createPaymentMethod);
 router.post('/geocode-address', getCoordinatesFromAddress);
 router.get('/search/cart', searchCart);
 router.post('/process-inventory', processStoreInventory);
-router.get('/fitbite-inventory', getFitbiteInventory);
+router.post('/fitbite-inventory', getFitbiteInventory);
 router.post('/addresses', createAddress);
 router.get('/addresses', getAddresses);
 export default router;
