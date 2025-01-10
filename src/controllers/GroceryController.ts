@@ -491,15 +491,11 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
     const openai = new OpenAI();
     // Call OpenAI API to find best matches
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "o1-mini",
       messages: [
         {
-          role: "system", 
-          content: "You are a helpful assistant that matches grocery items based on names and attributes."
-        },
-        {
           role: "user",
-          content: `Match the following search items with the best inventory and determine the appropriate quantity for each item.
+          content: `You are a helpful assistant that matches grocery items based on names and attributes. Match the following search items with the best inventory and determine the appropriate quantity for each item.
           Only return 1 match for each search item. The search items have positive and negative descriptors that you should use to match the inventory items.
           Do not include items that have matching negative descriptors. Include items that have matching positive descriptors.
           items based on name and other attributes. Return the best matches in the following JSON format:
@@ -514,7 +510,7 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
           ${JSON.stringify(dataForAI)}`
         }
       ],
-      temperature: 0.3,
+      temperature: 1,
     });
 
     const aiResponse = completion.choices[0];
@@ -526,6 +522,7 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
       // TODO: Use gpt json response mode instead of this
       content = content.slice(7, -3);
     }
+    console.log(content, 'content after stripping');
     const parsedMatches = JSON.parse(content) || { matches: [] };
     const bestMatches = parsedMatches.matches.map((match: any) => {
       const inventoryItem = inventoryItems.find(item => item._id.toString() === match._id);
@@ -535,6 +532,11 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
         adjusted_quantity: match.adjusted_quantity
       };
     });
+
+    // Filter out duplicates based on _id
+    // const uniqueMatches = bestMatches.filter((match: any, index: number, self: any[]) =>
+    //   index === self.findIndex((m: any) => m._id === match._id)
+    // );
 
     console.log(bestMatches, 'bestMatches');
 
