@@ -434,7 +434,7 @@ const getStoreInventory = async (req: Request, res: Response) => {
   }
 };
 
-const getFitbiteInventory = async (req: Request, res: Response) => {
+const deprGetFitbiteInventory = async (req: Request, res: Response) => {
   try {
     const { store_id, items } = req.body;
 
@@ -960,4 +960,4 @@ const getAddresses = async (req: Request, res: Response) => {
 
 export { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList, createShoppingListOrder,
   getStoreInventory, finalizeOrder, createPaymentMethod, getPaymentMethods, getCoordinatesFromAddress, searchCart, processStoreInventory,
-  getFitbiteInventory, createAddress, getAddresses };
+  deprGetFitbiteInventory, createAddress, getAddresses };

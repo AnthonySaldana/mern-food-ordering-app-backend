@@ -1,7 +1,8 @@
 import express from 'express';
 import { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList,
     createShoppingListOrder, getStoreInventory, getPaymentMethods, createPaymentMethod, getCoordinatesFromAddress,
-    searchCart, processStoreInventory, getFitbiteInventory, createAddress, getAddresses } from '../controllers/GroceryController';
+    searchCart, processStoreInventory, createAddress, getAddresses } from '../controllers/GroceryController';
+import { getFitbiteInventory } from '../workers/groceryWorker';
 
 const router = express.Router();
 
