@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import User from "../models/user";
+import { UserRole } from "../models/user";
 
 const getCurrentUser = async (req: Request, res: Response) => {
   try {
@@ -17,14 +18,18 @@ const getCurrentUser = async (req: Request, res: Response) => {
 
 const createCurrentUser = async (req: Request, res: Response) => {
   try {
-    const { auth0Id } = req.body;
+    const { auth0Id, email } = req.body;
     const existingUser = await User.findOne({ auth0Id });
 
     if (existingUser) {
       return res.status(200).send();
     }
 
-    const newUser = new User(req.body);
+    const newUser = new User({
+      auth0Id,
+      email,
+      role: UserRole.USER, // Assign default role
+    });
     await newUser.save();
 
     res.status(201).json(newUser.toObject());

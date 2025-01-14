@@ -2,6 +2,7 @@ import { auth } from "express-oauth2-jwt-bearer";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import User from "../models/user";
+import { UserRole } from "../models/user";
 
 declare global {
   namespace Express {
@@ -9,6 +10,7 @@ declare global {
       userId: string;
       auth0Id: string;
       userEmail: string;
+      userRole: UserRole;
     }
   }
 }
@@ -45,6 +47,8 @@ export const jwtParse = async (
 
     req.auth0Id = auth0Id as string;
     req.userId = user._id.toString();
+    req.userEmail = user.email;
+    req.userRole = user.role;
     next();
   } catch (error) {
     return res.sendStatus(401);

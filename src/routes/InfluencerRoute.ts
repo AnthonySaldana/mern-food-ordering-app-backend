@@ -4,6 +4,8 @@ import { param } from "express-validator";
 import InfluencerController from "../controllers/InfluencerController";
 import { jwtCheck, jwtParse } from "../middleware/auth";
 import { validateInfluencerRequest } from "../middleware/validation";
+import { roleCheck } from "../middleware/roleCheck";
+import { UserRole } from "../models/user";
 
 const router = express.Router();
 
@@ -40,7 +42,7 @@ router.patch(
   InfluencerController.updateMealPlan
 );
 
-router.get("/", jwtCheck, jwtParse, InfluencerController.getInfluencer);
+router.get("/", jwtCheck, jwtParse, roleCheck([UserRole.ADMIN, UserRole.CREATOR]), InfluencerController.getInfluencer);
 
 router.get(
   "/:influencerId",

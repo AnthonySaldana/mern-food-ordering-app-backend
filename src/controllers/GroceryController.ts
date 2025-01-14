@@ -794,6 +794,13 @@ const getPaymentMethods = async (req: Request, res: Response) => {
     mealmeapi.auth(MEALME_API_KEY);
 
     const { user_email } = req.query;
+    
+    console.log(req.userEmail, 'req.userEmail');
+    console.log(user_email, 'user_email');
+
+    if (user_email !== req.userEmail) {
+      return res.status(403).json({ message: "Forbidden: Email mismatch" });
+    }
 
     console.log(user_email, 'user_email');
     
@@ -948,6 +955,10 @@ const processStoreInventory = async (req: Request, res: Response) => {
 const getAddresses = async (req: Request, res: Response) => {
   try {
     const { email } = req.query;
+
+    if (email !== req.userEmail) {
+      return res.status(403).json({ message: "Forbidden: Email mismatch" });
+    }
 
     const user = await User.findOne({ email });
 
