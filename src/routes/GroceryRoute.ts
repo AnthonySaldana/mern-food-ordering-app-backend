@@ -1,8 +1,8 @@
 import express from 'express';
 import { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList,
     createShoppingListOrder, getStoreInventory, getPaymentMethods, createPaymentMethod, getCoordinatesFromAddress,
-    searchCart, processStoreInventory, createAddress, getAddresses } from '../controllers/GroceryController';
-import { getFitbiteInventory } from '../workers/groceryWorker';
+    searchCart, processStoreInventory, createAddress, getAddresses, getFitbiteInventory } from '../controllers/GroceryController';
+// import { getFitbiteInventory } from '../workers/groceryWorker';
 import { jwtCheck, jwtParse } from '../middleware/auth';
 
 const router = express.Router();
