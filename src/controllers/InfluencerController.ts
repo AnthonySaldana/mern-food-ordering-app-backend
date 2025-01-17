@@ -3,7 +3,7 @@ import Influencer, { MenuItem } from "../models/influencer";
 import cloudinary from "cloudinary";
 import mongoose from "mongoose";
 import MealPlan from "../models/mealplan";
-
+import Recommendation from "../models/recommendation";
 const getInfluencer = async (req: Request, res: Response) => {
   try {
     const influencer = await Influencer.findOne({ user: req.userId });
@@ -298,10 +298,29 @@ const uploadImage = async (file: Express.Multer.File) => {
   return uploadResponse.url;
 };
 
+const saveRecommendation = async (req: Request, res: Response) => {
+  try {
+    const { creatorName } = req.body;
+    console.log(creatorName, 'creatorName');
+    let recommendation;
+    try {
+      recommendation = await Recommendation.create({ creatorName });
+    } catch (err) {
+      console.log(err, 'err');
+      throw new Error('Failed to create recommendation');
+    }
+    console.log(recommendation, 'recommendation');
+    res.status(201).json(recommendation);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to save recommendation' });
+  }
+};
+
 export default {
   getInfluencer,
   createInfluencer,
   updateInfluencer,
+  saveRecommendation,
   getInfluencerMealPlans,
   updateMealPlan,
   getInfluencerById,

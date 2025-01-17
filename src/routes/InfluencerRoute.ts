@@ -82,4 +82,6 @@ router.put(
   InfluencerController.updateInfluencer
 );
 
+router.post('/recommend', InfluencerController.saveRecommendation);
+
 export default router;
