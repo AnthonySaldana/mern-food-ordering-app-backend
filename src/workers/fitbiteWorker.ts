@@ -76,14 +76,18 @@ export const processFitbiteJob = async (job: Job) => {
       content = content.slice(7, -3);
     }
     const parsedMatches = JSON.parse(content) || { matches: [] };
-    const bestMatches = parsedMatches.matches.map((match: any) => {
-      const inventoryItem = inventoryItems.find(item => item._id.toString() === match._id);
-      return {
-        ...match,
-        ...inventoryItem?.toObject(),
-        adjusted_quantity: match.adjusted_quantity,
-      };
-    });
+    const bestMatches = parsedMatches.matches
+      .filter((match: any, index: number, self: any[]) => 
+        index === self.findIndex((m: any) => m._id === match._id)
+      )
+      .map((match: any) => {
+        const inventoryItem = inventoryItems.find(item => item._id.toString() === match._id);
+        return {
+          ...match,
+          ...inventoryItem?.toObject(),
+          adjusted_quantity: match.adjusted_quantity,
+        };
+      });
 
     // Update existing match or create new one using upsert
     await Match.findOneAndUpdate(
