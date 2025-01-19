@@ -4,6 +4,7 @@ import { ShoppingListItemType, ShoppingListType, ShoppingList, ShoppingListItem 
 import { Order } from '../models/order';
 import User, { UserRole } from '../models/user';
 import { InventoryItem } from '../models/grocery';
+import { StoreProcessingStatus } from '../models/grocery';
 import inventoryQueue from '../queues/inventoryQueue';
 import OpenAI from "openai"
 
@@ -908,6 +909,22 @@ const processStoreInventory = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Store ID is required' });
     }
 
+    // Check if store is currently being processed or was recently processed
+    const storeProcessing = await StoreProcessingStatus.findOne({ store_id });
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    if (storeProcessing) {
+      // If store is currently being processed, skip
+      if (storeProcessing.is_processing) {
+        return res.json({ message: 'Store inventory is currently being processed' });
+      }
+
+      // If store was processed within last 24 hours, skip
+      if (storeProcessing.time_end && storeProcessing.time_end > oneDayAgo) {
+        return res.json({ message: 'Store inventory was recently processed', last_processed: storeProcessing.time_end });
+      }
+    }
+
     console.log("Processing inventory job for store: ", store_id);
     mealmeapi.auth(process.env.MEALME_API_KEY as string);
 
@@ -931,6 +948,18 @@ const processStoreInventory = async (req: Request, res: Response) => {
 
     // Only add to queue if MealMe call succeeded
     if (response?.data) {
+      // Update or create processing status
+      await StoreProcessingStatus.findOneAndUpdate(
+        { store_id },
+        { 
+          store_id,
+          is_processing: true,
+          time_start: new Date(),
+          time_end: null
+        },
+        { upsert: true }
+      );
+
       await inventoryQueue.add({
         store_id,
         latitude,

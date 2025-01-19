@@ -34,6 +34,13 @@ const inventoryItemSchema = new mongoose.Schema({
   is_available: { type: Boolean, required: true }
 });
 
+const storeProcessingStatusSchema = new mongoose.Schema({
+  store_id: { type: String, required: true },
+  is_processing: { type: Boolean, required: true },
+  time_start: { type: Date, required: true },
+  time_end: { type: Date }
+});
+
 export type ShoppingListItemType = InferSchemaType<typeof shoppingListItemSchema>;
 export type ShoppingListType = InferSchemaType<typeof shoppingListSchema>;
 export type InventoryItemType = InferSchemaType<typeof inventoryItemSchema>;
@@ -41,3 +48,4 @@ export type InventoryItemType = InferSchemaType<typeof inventoryItemSchema>;
 export const ShoppingListItem = mongoose.model("ShoppingListItem", shoppingListItemSchema);
 export const ShoppingList = mongoose.model("ShoppingList", shoppingListSchema);
 export const InventoryItem = mongoose.model('InventoryItem', inventoryItemSchema);
+export const StoreProcessingStatus = mongoose.model('StoreProcessingStatus', storeProcessingStatusSchema);
