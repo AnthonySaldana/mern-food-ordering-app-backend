@@ -48,7 +48,7 @@ export const processFitbiteJob = async (job: Job) => {
     const openai = new OpenAI();
     // Call OpenAI API to find best matches
     const completion = await openai.chat.completions.create({
-      model: "o1-mini",
+      model: "gpt-4o",
       messages: [
         {
           role: "user",
@@ -85,14 +85,18 @@ export const processFitbiteJob = async (job: Job) => {
       };
     });
 
-    // Save matches to the database
-    await Match.create({
-      store_id,
-      influencer_id,
-      matches: bestMatches
-    });
+    // Update existing match or create new one using upsert
+    await Match.findOneAndUpdate(
+      { store_id, influencer_id },
+      { 
+        store_id,
+        influencer_id,
+        matches: bestMatches
+      },
+      { upsert: true, new: true }
+    );
 
-    console.log('Matches saved to the database');
+    console.log('Matches saved/updated in the database');
   } catch (error) {
     console.error('Error processing fitbite job:', error);
     throw error;
