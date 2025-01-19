@@ -788,7 +788,6 @@ const createAddress = async (req: Request, res: Response) => {
   }
 };
 
-
 const getPaymentMethods = async (req: Request, res: Response) => {
   try {
     mealmeapi.auth(MEALME_API_KEY);
