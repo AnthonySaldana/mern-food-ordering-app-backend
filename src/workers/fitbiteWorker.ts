@@ -85,6 +85,7 @@ export const processFitbiteJob = async (job: Job) => {
         return {
           ...match,
           ...inventoryItem?.toObject(),
+          price: inventoryItem?.price,
           adjusted_quantity: match.adjusted_quantity,
         };
       });
