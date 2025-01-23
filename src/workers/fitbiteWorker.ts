@@ -5,10 +5,10 @@ import OpenAI from 'openai';
 
 export const processFitbiteJob = async (job: Job) => {
   const { store_id, influencer_id, items } = job.data;
-  console.log("Processing fitbite job for store: ", store_id);
-  console.log("Items: ");
-  console.log(items);
-  console.log(items.length, 'items length');
+  // console.log("Processing fitbite job for store: ", store_id);
+  // console.log("Items: ");
+  // console.log(items);
+  // console.log(items.length, 'items length');
 
   try {
     // Function to split items into chunks of a specified size
@@ -23,8 +23,8 @@ export const processFitbiteJob = async (job: Job) => {
     // Split items into chunks of 15
     const itemChunks = chunkArray(items, 15);
 
-    console.log("Item chunks: ");
-    console.log(itemChunks);
+    // console.log("Item chunks: ");
+    // console.log(itemChunks);
 
     let allBestMatches: any[] = [];
 
