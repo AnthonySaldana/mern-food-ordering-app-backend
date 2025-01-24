@@ -18,6 +18,8 @@ const RecipeSchema: Schema = new Schema({
   protein: { type: Number, required: true },
   ingredients: { type: String, required: true },
   instructions: { type: String, required: true },
+  influencer_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Influencer' },
+  meal_plan_id: { type: mongoose.Schema.Types.ObjectId, ref: 'MealPlan' },
 });
 
 export default mongoose.model<Recipe>('Recipe', RecipeSchema);

@@ -55,7 +55,7 @@ export const processFitbiteJob = async (job: Job) => {
       const inventoryItems = await InventoryItem.find({
         store_id: store_id,
         $or: conditions
-      }).limit(100);
+      }).limit(200);
 
       // Prepare trimmed data for AI model
       const dataForAI = {

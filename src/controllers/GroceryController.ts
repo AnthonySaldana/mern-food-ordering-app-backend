@@ -633,8 +633,8 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       subtotal: orderResponse.data.subtotal,
       tax: orderResponse.data.tax,
       delivery_fee: orderResponse.data.delivery_fee,
-      influencer_id, // Add influencer reference
-      meal_plan_name, // Add meal plan name for reference
+      influencer_id, // influencer reference
+      meal_plan_name, // Add meal plan name for reference #todo change to id reference?
       plan_start_day
     });
 
