@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import Recipe from "../models/recipe";
+import mongoose from "mongoose";
 
 export const createRecipe = async (req: Request, res: Response) => {
   try {
@@ -20,7 +21,10 @@ export const getRecipes = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Influencer ID is required" });
     }
 
-    const recipes = await Recipe.find({ influencerId });
+    console.log("influencerId", influencerId);
+
+    const recipes = await Recipe.find({ influencer_id: new mongoose.Types.ObjectId(influencerId) });
+    console.log("recipes", recipes);
     res.json(recipes);
   } catch (error) {
     console.error("Error fetching recipes:", error);
