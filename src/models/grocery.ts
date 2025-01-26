@@ -25,13 +25,14 @@ const shoppingListSchema = new mongoose.Schema({
 const inventoryItemSchema = new mongoose.Schema({
   store_id: { type: String, required: true },
   product_id: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
+  name: { type: String, required: true, index: 'text' },
   price: { type: Number, required: true },
   unit_size: { type: String },
   unit_of_measurement: { type: String },
   description: { type: String },
   image: { type: String },
-  is_available: { type: Boolean, required: true }
+  is_available: { type: Boolean, required: true },
+  upc: { type: String }
 });
 
 const storeProcessingStatusSchema = new mongoose.Schema({
