@@ -15,12 +15,19 @@ const MatchSchema: Schema = new Schema({
   influencer_id: { type: String, required: true },
   matches: [
     {
-      _id: { type: String, required: true },
       name: { type: String, required: true },
-      adjusted_quantity: { type: Number, required: true },
-      price: { type: Number, required: true },
-      image: { type: String, required: true },
-      is_available: { type: Boolean, required: true },
+      unit_of_measurement: { type: String, required: true },
+      unit_size: { type: Number, required: true },
+      matched_items: [
+        {
+          _id: { type: String, required: true },
+          name: { type: String, required: true },
+          adjusted_quantity: { type: Number, required: true },
+          price: { type: Number, required: true },
+          image: { type: String, required: true },
+          is_available: { type: Boolean, required: true },
+        }
+      ]
     },
   ],
 });

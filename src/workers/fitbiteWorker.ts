@@ -26,8 +26,8 @@ export const processFitbiteJob = async (job: Job) => {
       // Build query conditions for each chunk
       const conditions = chunk.map((item: any) => {
         const condition: any = {
-          // $text: { $search: item.name, $caseSensitive: false } // Fuzzy text search on name
-          name: { $regex: item.name, $options: 'i' }
+          $text: { $search: item.name, $caseSensitive: false } // Fuzzy text search on name
+          // name: { $regex: item.name, $options: 'i' }
           // name: { $eq: item.name } // Exact match on name using $eq operator
         };
 
@@ -62,24 +62,48 @@ export const processFitbiteJob = async (job: Job) => {
         // Only search if we haven't already found a match for this item name
         if (!matchedItemNames.has(item.name)) {
           // Find the single best matching inventory item
-          const bestMatch = await InventoryItem.findOne({
+          const bestMatches = (await InventoryItem.find({
             store_id: store_id,
             ...condition
-          }); //.sort({ score: { $meta: "textScore" } });
+          }).limit(20)).filter(item => 
+            !item.name.toLowerCase().includes('wine') &&
+            !item.name.toLowerCase().includes('beer') &&
+            !item.name.toLowerCase().includes('vodka') &&
+            !item.name.toLowerCase().includes('whiskey') &&
+            !item.name.toLowerCase().includes('liquor') &&
+            !item.name.toLowerCase().includes('rum') &&
+            !item.name.toLowerCase().includes('tequila') &&
+            !item.name.toLowerCase().includes('gin') &&
+            !item.name.toLowerCase().includes('alcohol')
+          ); //.sort({ score: { $meta: "textScore" } });
 
-          if (bestMatch) {
+          if (bestMatches && bestMatches.length > 0) {
             matchedItemNames.add(item.name); // Add original item name to matched names
             allBestMatches.push({
-              _id: bestMatch._id,
-              name: bestMatch.name,
-              price: bestMatch.price,
-              adjusted_quantity: 1
+              name: item.name,
+              unit_of_measurement: item.unit_of_measurement,
+              unit_size: item.unit_size,
+              matched_items: bestMatches.map(match => ({
+                _id: match._id,
+                name: match.name,
+                price: match.price,
+                adjusted_quantity: 1
+              }))
+            });
+          } else {
+            console.log("No matches found for item: ", item.name);
+            allBestMatches.push({
+              name: item.name,
+              unit_of_measurement: item.unit_of_measurement,
+              unit_size: item.unit_size,
+              matched_items: []
             });
           }
         }
       }
     }
 
+    
     // Update existing match or create new one using upsert
     await Match.findOneAndUpdate(
       { store_id, influencer_id },
