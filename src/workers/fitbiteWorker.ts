@@ -25,6 +25,8 @@ export const processFitbiteJob = async (job: Job) => {
     for (const chunk of itemChunks) {
       // Build query conditions for each chunk
       const conditions = chunk.map((item: any) => {
+        console.log(item, 'item')
+        console.log("item name inside loop", item.name);
         const condition: any = {
           $text: { $search: item.name, $caseSensitive: false } // Fuzzy text search on name
           // name: { $regex: item.name, $options: 'i' }
@@ -83,10 +85,17 @@ export const processFitbiteJob = async (job: Job) => {
               name: item.name,
               unit_of_measurement: item.unit_of_measurement,
               unit_size: item.unit_size,
+              imageUrl: item.imageUrl,
+              macros: {
+                protein: item.macros?.protein,
+                carbs: item.macros?.carbs,
+                fat: item.macros?.fat,
+              },
               matched_items: bestMatches.map(match => ({
                 _id: match._id,
                 name: match.name,
                 price: match.price,
+                image: match.image,
                 adjusted_quantity: 1
               }))
             });
@@ -96,6 +105,12 @@ export const processFitbiteJob = async (job: Job) => {
               name: item.name,
               unit_of_measurement: item.unit_of_measurement,
               unit_size: item.unit_size,
+              imageUrl: item.imageUrl,
+              macros: {
+                protein: item.macros?.protein,
+                carbs: item.macros?.carbs,
+                fat: item.macros?.fat,
+              },
               matched_items: []
             });
           }
