@@ -18,6 +18,12 @@ const MatchSchema: Schema = new Schema({
       name: { type: String, required: true },
       unit_of_measurement: { type: String, required: true },
       unit_size: { type: Number, required: true },
+      macros: {
+        protein: { type: Number, required: false },
+        carbs: { type: Number, required: false },
+        fat: { type: Number, required: false },
+      },
+      imageUrl: { type: String, required: false },
       matched_items: [
         {
           _id: { type: String, required: true },
