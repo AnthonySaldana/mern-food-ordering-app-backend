@@ -5,7 +5,7 @@ interface MatchDocument extends Document {
   influencer_id: string;
   matches: Array<{
     _id: string;
-    name: string;
+    name: string; 
     adjusted_quantity: number;
   }>;
 }
@@ -32,6 +32,8 @@ const MatchSchema: Schema = new Schema({
           price: { type: Number, required: true },
           image: { type: String, required: true },
           is_available: { type: Boolean, required: true },
+          unit_of_measurement: { type: String, required: true },
+          unit_size: { type: Number, required: true },
         }
       ]
     },
