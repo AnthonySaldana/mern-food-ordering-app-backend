@@ -96,6 +96,8 @@ export const processFitbiteJob = async (job: Job) => {
                 name: match.name,
                 price: match.price,
                 image: match.image,
+                unit_of_measurement: match.unit_of_measurement,
+                unit_size: match.unit_size,
                 adjusted_quantity: 1
               }))
             });

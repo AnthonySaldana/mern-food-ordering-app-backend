@@ -14,6 +14,8 @@ const menuItemSchema = new mongoose.Schema({
   ingredients: { type: String },
   calories: { type: Number },
   macros: macroSchema,
+  unit_of_measurement: { type: String },
+  unit_size: { type: Number },
   imageUrl: { type: String },
   gallery: [{ type: String }],
   positiveDescriptors: { type: String },
