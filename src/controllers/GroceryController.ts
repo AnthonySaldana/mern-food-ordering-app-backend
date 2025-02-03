@@ -997,6 +997,35 @@ const getAddresses = async (req: Request, res: Response) => {
   }
 };
 
+const deletePaymentMethod = async (req: Request, res: Response) => {
+  try {
+    mealmeapi.auth(MEALME_API_KEY);
+
+    const { payment_method_id, user_email } = req.body;
+
+    if (!payment_method_id || !user_email) {
+      return res.status(400).json({ message: 'Payment method ID and email are required' });
+    }
+
+    const user = await User.findOne({ email: user_email });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const response = await mealmeapi.post_payment_delete({
+      user_id: user._id.toString(),
+      user_email: user.email,
+      payment_method_id
+    });
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error deleting payment method:', error);
+    res.status(500).json({ message: 'Error deleting payment method' });
+  }
+};
+
 export { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList, createShoppingListOrder,
   getStoreInventory, finalizeOrder, createPaymentMethod, getPaymentMethods, getCoordinatesFromAddress, searchCart, processStoreInventory,
-  getFitbiteInventory, createAddress, getAddresses };
+  getFitbiteInventory, createAddress, getAddresses, deletePaymentMethod };
