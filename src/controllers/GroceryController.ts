@@ -1026,6 +1026,38 @@ const deletePaymentMethod = async (req: Request, res: Response) => {
   }
 };
 
+const deleteAddress = async (req: Request, res: Response) => {
+  try {
+    const { street_num, street_name, user_email } = req.body;
+
+    if (!street_num || !street_name || !user_email) {
+      return res.status(400).json({ message: 'Street number, street name, and email are required' });
+    }
+
+    const user = await User.findOne({ email: user_email });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const initialAddressCount = user.addresses.length;
+    user.addresses = user.addresses.filter(address => 
+      address.streetNum !== street_num || address.streetName !== street_name
+    );
+
+    if (user.addresses.length === initialAddressCount) {
+      return res.status(404).json({ message: 'Address not found' });
+    }
+
+    await user.save();
+
+    res.json({ message: 'Address deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting address:', error);
+    res.status(500).json({ message: 'Error deleting address' });
+  }
+};
+
 export { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList, createShoppingListOrder,
   getStoreInventory, finalizeOrder, createPaymentMethod, getPaymentMethods, getCoordinatesFromAddress, searchCart, processStoreInventory,
-  getFitbiteInventory, createAddress, getAddresses, deletePaymentMethod };
+  getFitbiteInventory, createAddress, getAddresses, deletePaymentMethod, deleteAddress };
