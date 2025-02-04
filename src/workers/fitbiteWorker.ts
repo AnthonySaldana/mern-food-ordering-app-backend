@@ -67,7 +67,7 @@ export const processFitbiteJob = async (job: Job) => {
           const bestMatches = (await InventoryItem.find({
             store_id: store_id,
             ...condition
-          }).limit(20)).filter(item => 
+          }).limit(200)).filter(item => 
             !item.name.toLowerCase().includes('wine') &&
             !item.name.toLowerCase().includes('beer') &&
             !item.name.toLowerCase().includes('vodka') &&
