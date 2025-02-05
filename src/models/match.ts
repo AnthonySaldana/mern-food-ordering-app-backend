@@ -27,6 +27,7 @@ const MatchSchema: Schema = new Schema({
       matched_items: [
         {
           _id: { type: String, required: true },
+          product_id: { type: String, required: true },
           name: { type: String, required: true },
           adjusted_quantity: { type: Number, required: true },
           price: { type: Number, required: true },
