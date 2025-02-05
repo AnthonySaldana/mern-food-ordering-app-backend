@@ -33,13 +33,13 @@ export const processFitbiteJob = async (job: Job) => {
           // name: { $eq: item.name } // Exact match on name using $eq operator
         };
 
-        if (item.unit_of_measurement) {
-          condition.unit_of_measurement = item.unit_of_measurement;
-        }
+        // if (item.unit_of_measurement) {
+        //   condition.unit_of_measurement = item.unit_of_measurement;
+        // }
 
-        if (item.unit_size) {
-          condition.unit_size = item.unit_size;
-        }
+        // if (item.unit_size) {
+        //   condition.unit_size = item.unit_size;
+        // }
 
         // Exclude items with negative descriptors
         // if (item.negativeDescriptors && item.negativeDescriptors.length > 0) {
@@ -67,7 +67,7 @@ export const processFitbiteJob = async (job: Job) => {
           const bestMatches = (await InventoryItem.find({
             store_id: store_id,
             ...condition
-          }).limit(20)).filter(item => 
+          }).limit(200)).filter(item => 
             !item.name.toLowerCase().includes('wine') &&
             !item.name.toLowerCase().includes('beer') &&
             !item.name.toLowerCase().includes('vodka') &&
