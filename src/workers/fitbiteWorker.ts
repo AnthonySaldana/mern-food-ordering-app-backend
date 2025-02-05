@@ -93,6 +93,7 @@ export const processFitbiteJob = async (job: Job) => {
               },
               matched_items: bestMatches.map(match => ({
                 _id: match._id,
+                product_id: match.product_id,
                 name: match.name,
                 price: match.price,
                 image: match.image,
