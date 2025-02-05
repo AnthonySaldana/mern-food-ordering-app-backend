@@ -12,6 +12,7 @@ import groceryRoute from "./routes/GroceryRoute";
 import recipeRoute from "./routes/RecipeRoute";
 import matchRoute from "./routes/MatchRoute";
 import shoppingListRoute from "./routes/ShoppingListRoute";
+import inventoryRoute from "./routes/InventoryRoute";
 
 const PORT = process.env.PORT || 7000;
 mongoose
@@ -61,6 +62,7 @@ app.use("/api/grocery", groceryRoute);
 app.use("/api/recipe", recipeRoute);
 app.use("/api/matches", matchRoute);
 app.use("/api/shoppingList", shoppingListRoute);
+app.use("/api/inventory", inventoryRoute);
 
 app.listen(PORT, () => {
   console.log(`server started on localhost:${PORT}`);
