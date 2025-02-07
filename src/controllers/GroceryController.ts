@@ -99,6 +99,9 @@ const searchGroceryStores = async (req: Request, res: Response) => {
       });
     }
 
+
+    console.log("Calling mealmeapi.get_search_store_v3");
+
     const response = await mealmeapi.get_search_store_v3({
       query: query as string,
       latitude: Number(latitude),
@@ -124,6 +127,8 @@ const searchGroceryStores = async (req: Request, res: Response) => {
       user_country: user_country as string
     });
 
+    console.log("Creating store list");
+
     // Extract store info to analyze with GPT
     const storeList = response.data.stores.map((store: any) => ({
       id: store._id,
@@ -136,6 +141,8 @@ const searchGroceryStores = async (req: Request, res: Response) => {
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY
     });
+
+    console.log("Calling OpenAI API");
 
     const gptResponse = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -155,9 +162,11 @@ const searchGroceryStores = async (req: Request, res: Response) => {
       response_format: { type: "json_object" }
     });
 
+    console.log("Parsing GPT response");
+
     const groceryStoreIds = JSON.parse(gptResponse.choices[0].message.content!)?.store_ids;
 
-    console.log(groceryStoreIds, 'groceryStoreIds');
+    // console.log(groceryStoreIds, 'groceryStoreIds');
     console.log(response.data, 'response.data');
     console.log(response.data.stores, 'response.data.stores');
 
@@ -165,7 +174,7 @@ const searchGroceryStores = async (req: Request, res: Response) => {
     const filteredResponse = {
       ...response.data,
       stores: response.data.stores.filter((store: any) => 
-        groceryStoreIds.includes(store._id) && 
+        // groceryStoreIds.includes(store._id) && 
         !store.name.toLowerCase().includes('liquor')
       )
     };
@@ -580,7 +589,7 @@ const getFitbiteInventory = async (req: Request, res: Response) => {
 
 const createGroceryOrder = async (req: Request, res: Response) => {
   try {
-    const { store_id, items, delivery_details, place_order, final_quote, payment_details, influencer_id, meal_plan_name, plan_start_day } = req.body;
+    const { store_id, items, delivery_details, place_order, final_quote, payment_details, influencer_id, meal_plan_name, plan_start_day, username } = req.body;
     
     mealmeapi.auth(MEALME_API_KEY);
 
@@ -603,8 +612,8 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       user_zipcode: delivery_details.zipcode,
       user_dropoff_notes: delivery_details.instructions,
       user_email: delivery_details.user_email || 'admin@fitbite.app', // TODO: Get from user profile
-      user_id: "test123", // TODO: Get from user profile 
-      user_name: "Test User", // TODO: Get from user profile
+      user_id: delivery_details.user_email, // TODO: Get from user profile 
+      user_name: username || delivery_details.user_email, // TODO: Get from user profile
       user_phone: 5622043228, // TODO: Get from user profile
       charge_user: true,
       include_final_quote: true,
