@@ -145,7 +145,7 @@ const searchGroceryStores = async (req: Request, res: Response) => {
     console.log("Calling OpenAI API");
 
     const gptResponse = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
@@ -594,6 +594,8 @@ const createGroceryOrder = async (req: Request, res: Response) => {
     mealmeapi.auth(MEALME_API_KEY);
 
     console.log(delivery_details, 'delivery_details');
+
+    console.log(username, 'username');
     
     const orderResponse = await mealmeapi.post_order_v3({
       items,
