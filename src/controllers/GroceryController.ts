@@ -174,7 +174,7 @@ const searchGroceryStores = async (req: Request, res: Response) => {
     const filteredResponse = {
       ...response.data,
       stores: response.data.stores.filter((store: any) => 
-        // groceryStoreIds.includes(store._id) && 
+        groceryStoreIds.includes(store._id) && 
         !store.name.toLowerCase().includes('liquor')
       )
     };
@@ -613,7 +613,7 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       user_dropoff_notes: delivery_details.instructions,
       user_email: delivery_details.user_email || 'admin@fitbite.app', // TODO: Get from user profile
       user_id: delivery_details.user_email, // TODO: Get from user profile 
-      user_name: username || delivery_details.user_email, // TODO: Get from user profile
+      user_name: username?.includes(' ') ? username : username + " Guest" || delivery_details.user_email + " Guest", // TODO: Get from user profile
       user_phone: 5622043228, // TODO: Get from user profile
       charge_user: true,
       include_final_quote: true,
@@ -630,6 +630,8 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       payment_method_id: payment_details.payment_method_id
     });
 
+    console.log(orderResponse.data, 'orderResponse.data');
+
     // Store order in our database
     const order = new Order({
       user: req.userId,
@@ -637,7 +639,7 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       items,
       delivery_details,
       mealme_order_id: orderResponse.data.order_id,
-      status: 'pending',
+      status: 'inProgress',
       total: orderResponse.data.total,
       subtotal: orderResponse.data.subtotal,
       tax: orderResponse.data.tax,
@@ -646,6 +648,8 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       meal_plan_name, // Add meal plan name for reference #todo change to id reference?
       plan_start_day
     });
+
+    console.log(order, 'order');
 
     await order.save();
 
