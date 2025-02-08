@@ -639,7 +639,7 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       items,
       delivery_details,
       mealme_order_id: orderResponse.data.order_id,
-      status: 'pending',
+      status: 'inProgress',
       total: orderResponse.data.total,
       subtotal: orderResponse.data.subtotal,
       tax: orderResponse.data.tax,
