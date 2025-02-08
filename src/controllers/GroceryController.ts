@@ -615,7 +615,9 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       user_dropoff_notes: delivery_details.instructions,
       user_email: delivery_details.user_email || 'admin@fitbite.app', // TODO: Get from user profile
       user_id: delivery_details.user_email, // TODO: Get from user profile 
-      user_name: username?.includes(' ') ? username : username + " Guest" || delivery_details.user_email + " Guest", // TODO: Get from user profile
+      user_name: username?.includes(' ') ? 
+        username.split(' ').map((name: string) => name.length === 1 ? name + name : name).join(' ') : 
+        username + " Guest" || delivery_details.user_email + " Guest", // TODO: Get from user profile
       user_phone: 5622043228, // TODO: Get from user profile
       charge_user: true,
       include_final_quote: true,
