@@ -602,6 +602,13 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       username + " Guest" || delivery_details.user_email + " Guest"
 
     console.log(calculatedUserName, 'calculatedUserName');
+
+    // Get user record from database
+    const user = await User.findOne({ email: delivery_details.user_email });
+    const userId = user?._id || 'guest';
+
+    console.log(userId, 'userId');
+    console.log(user, 'user');
     
     const orderResponse = await mealmeapi.post_order_v3({
       items,
@@ -620,7 +627,7 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       user_zipcode: delivery_details.zipcode,
       user_dropoff_notes: delivery_details.instructions,
       user_email: delivery_details.user_email || 'admin@fitbite.app', // TODO: Get from user profile
-      user_id: delivery_details.user_email, // TODO: Get from user profile 
+      user_id: userId, // TODO: Get from user profile 
       user_name: calculatedUserName,
       user_phone: 5622043228, // TODO: Get from user profile
       charge_user: true,
