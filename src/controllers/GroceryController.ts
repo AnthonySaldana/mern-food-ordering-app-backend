@@ -596,6 +596,12 @@ const createGroceryOrder = async (req: Request, res: Response) => {
     console.log(delivery_details, 'delivery_details');
 
     console.log(username, 'username');
+
+    const calculatedUserName = username?.includes(' ') ? 
+      username.split(' ').map((name: string) => name.length === 1 ? name + name : name).join(' ') : 
+      username + " Guest" || delivery_details.user_email + " Guest"
+
+    console.log(calculatedUserName, 'calculatedUserName');
     
     const orderResponse = await mealmeapi.post_order_v3({
       items,
@@ -615,9 +621,7 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       user_dropoff_notes: delivery_details.instructions,
       user_email: delivery_details.user_email || 'admin@fitbite.app', // TODO: Get from user profile
       user_id: delivery_details.user_email, // TODO: Get from user profile 
-      user_name: username?.includes(' ') ? 
-        username.split(' ').map((name: string) => name.length === 1 ? name + name : name).join(' ') : 
-        username + " Guest" || delivery_details.user_email + " Guest", // TODO: Get from user profile
+      user_name: calculatedUserName,
       user_phone: 5622043228, // TODO: Get from user profile
       charge_user: true,
       include_final_quote: true,
