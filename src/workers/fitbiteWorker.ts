@@ -83,6 +83,7 @@ export const processFitbiteJob = async (job: Job) => {
             matchedItemNames.add(item.name); // Add original item name to matched names
             allBestMatches.push({
               name: item.name,
+              searchTerm: item.searchTerm,
               unit_of_measurement: item.unit_of_measurement,
               unit_size: item.unit_size,
               imageUrl: item.imageUrl,
