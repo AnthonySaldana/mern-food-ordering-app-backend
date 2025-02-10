@@ -16,6 +16,7 @@ const MatchSchema: Schema = new Schema({
   matches: [
     {
       name: { type: String, required: true },
+      searchTerm: { type: String, required: false },
       unit_of_measurement: { type: String, required: true },
       unit_size: { type: Number, required: true },
       macros: {

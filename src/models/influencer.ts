@@ -16,6 +16,7 @@ export type MenuItem = InferSchemaType<typeof menuItemSchema>;
 
 export const menuItemSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  searchTerm: { type: String, required: false },
   price: { type: Number, required: true },
   ingredients: { type: String },
   calories: { type: Number },
