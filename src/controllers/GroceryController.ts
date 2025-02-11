@@ -102,30 +102,88 @@ const searchGroceryStores = async (req: Request, res: Response) => {
 
     console.log("Calling mealmeapi.get_search_store_v3");
 
-    const response = await mealmeapi.get_search_store_v3({
-      query: query as string,
-      latitude: Number(latitude),
-      longitude: Number(longitude),
-      store_type: 'grocery', 
-      budget: Number(budget),
-      maximum_miles: 10,
-      search_focus: search_focus as string,
-      sort: sort as string,
-      pickup: pickup === 'true',
-      fetch_quotes: false,
-      open: false, //open === 'true',
-      default_quote: false,
-      autocomplete: false,
-      include_utc_hours: false,
-      projections: '_id,name,address,type,is_open,miles',
-      use_new_db: true,
-      user_street_num: user_street_num as string,
-      user_street_name: user_street_name as string,
-      user_city: user_city as string,
-      user_state: user_state as string,
-      user_zipcode: user_zipcode as string,
-      user_country: user_country as string
-    });
+    let response;
+    try {
+      response = await mealmeapi.get_search_store_v3({
+        query: query as string,
+        latitude: Number(latitude),
+        longitude: Number(longitude),
+        store_type: 'grocery', 
+        budget: Number(budget),
+        maximum_miles: 10,
+        search_focus: search_focus as string,
+        sort: sort as string,
+        pickup: pickup === 'true',
+        fetch_quotes: true,
+        open: false, //open === 'true',
+        default_quote: false,
+        autocomplete: false,
+        include_utc_hours: false,
+        projections: '_id,name,address,type,is_open,miles',
+        use_new_db: true,
+        user_street_num: user_street_num as string,
+        user_street_name: user_street_name as string,
+        user_city: user_city as string,
+        user_state: user_state as string,
+        user_zipcode: user_zipcode as string,
+        user_country: user_country as string
+      });
+
+      console.log(response.data, 'response.data from mealmeapi.get_search_store_v3');
+
+      if (response.data.stores.length === 0) {
+        response = await mealmeapi.get_search_store_v3({
+          query: query as string,
+          latitude: Number(latitude),
+          longitude: Number(longitude),
+          store_type: 'grocery', 
+          budget: Number(budget),
+          maximum_miles: 10,
+          search_focus: search_focus as string,
+          sort: sort as string,
+          pickup: pickup === 'true',
+          fetch_quotes: false,
+          open: false, //open === 'true',
+          default_quote: false,
+          autocomplete: false,
+          include_utc_hours: false,
+          projections: '_id,name,address,type,is_open,miles',
+          use_new_db: true,
+          user_street_num: user_street_num as string,
+          user_street_name: user_street_name as string,
+          user_city: user_city as string,
+          user_state: user_state as string,
+          user_zipcode: user_zipcode as string,
+          user_country: user_country as string
+        });
+      }
+    } catch (error) {
+      // If first attempt fails, retry with fetch_quotes: false
+      response = await mealmeapi.get_search_store_v3({
+        query: query as string,
+        latitude: Number(latitude),
+        longitude: Number(longitude),
+        store_type: 'grocery', 
+        budget: Number(budget),
+        maximum_miles: 10,
+        search_focus: search_focus as string,
+        sort: sort as string,
+        pickup: pickup === 'true',
+        fetch_quotes: false,
+        open: false, //open === 'true',
+        default_quote: false,
+        autocomplete: false,
+        include_utc_hours: false,
+        projections: '_id,name,address,type,is_open,miles',
+        use_new_db: true,
+        user_street_num: user_street_num as string,
+        user_street_name: user_street_name as string,
+        user_city: user_city as string,
+        user_state: user_state as string,
+        user_zipcode: user_zipcode as string,
+        user_country: user_country as string
+      });
+    }
 
     console.log("Creating store list");
 
@@ -174,7 +232,7 @@ const searchGroceryStores = async (req: Request, res: Response) => {
     const filteredResponse = {
       ...response.data,
       stores: response.data.stores.filter((store: any) => 
-        groceryStoreIds.includes(store._id) && 
+        // groceryStoreIds && groceryStoreIds.includes(store._id) && 
         !store.name.toLowerCase().includes('liquor')
       )
     };
