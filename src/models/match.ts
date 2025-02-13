@@ -19,6 +19,10 @@ const MatchSchema: Schema = new Schema({
       searchTerm: { type: String, required: false },
       unit_of_measurement: { type: String, required: true },
       unit_size: { type: Number, required: true },
+      unit_details: Array<{ 
+        unit_of_measurement: { type: String, required: true },
+        unit_size: { type: Number, required: true },
+       }>,
       macros: {
         protein: { type: Number, required: false },
         carbs: { type: Number, required: false },
