@@ -39,17 +39,14 @@ export const getShoppingList = async (req: Request, res: Response) => {
       console.log(inventoryItemMap, "inventoryItemMap");
 
       // Attach inventory items to shopping list
-      const enrichedShoppingList = config.shoppingList.map((item: any) => {
-        if (!item.matched_item_id) {
-          return { ...item._doc };
-        }
-        return {
+      const enrichedShoppingList = config.shoppingList
+        .filter((item: any) => item.matched_item_id)
+        .map((item: any) => ({
           ...item._doc,
           ...inventoryItemMap[item.matched_item_id]._doc,
           imageUrl: inventoryItemMap[item.matched_item_id]._doc.image,
-          matchedItem: item
-        };
-      });
+          matched_item: item
+        }));
 
     //   console.log(config, "config");
       console.log(enrichedShoppingList, "enrichedShoppingList");

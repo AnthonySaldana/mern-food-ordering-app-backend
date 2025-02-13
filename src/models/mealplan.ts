@@ -8,6 +8,11 @@ const macroSchema = new mongoose.Schema({
   fat: { type: Number }
 });
 
+const unitDetailsSchema = new mongoose.Schema({
+  unit_of_measurement: { type: String },
+  unit_size: { type: Number },
+});
+
 const menuItemSchema = new mongoose.Schema({
   name: { type: String, required: true },
   price: { type: Number, required: true },
@@ -16,6 +21,7 @@ const menuItemSchema = new mongoose.Schema({
   macros: macroSchema,
   unit_of_measurement: { type: String },
   unit_size: { type: Number },
+  unit_details: [unitDetailsSchema],
   imageUrl: { type: String },
   gallery: [{ type: String }],
   positiveDescriptors: { type: String },

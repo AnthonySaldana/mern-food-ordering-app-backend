@@ -114,7 +114,7 @@ const searchGroceryStores = async (req: Request, res: Response) => {
         search_focus: search_focus as string,
         sort: sort as string,
         pickup: pickup === 'true',
-        fetch_quotes: true,
+        fetch_quotes: false,
         open: false, //open === 'true',
         default_quote: false,
         autocomplete: false,

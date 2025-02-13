@@ -86,6 +86,7 @@ export const processFitbiteJob = async (job: Job) => {
               searchTerm: item.searchTerm,
               unit_of_measurement: item.unit_of_measurement,
               unit_size: item.unit_size,
+              unit_details: item.unit_details,
               imageUrl: item.imageUrl,
               macros: {
                 protein: item.macros?.protein,
@@ -109,6 +110,7 @@ export const processFitbiteJob = async (job: Job) => {
               name: item.name,
               unit_of_measurement: item.unit_of_measurement,
               unit_size: item.unit_size,
+              unit_details: item.unit_details,
               imageUrl: item.imageUrl,
               macros: {
                 protein: item.macros?.protein,
@@ -122,7 +124,7 @@ export const processFitbiteJob = async (job: Job) => {
       }
     }
 
-    
+    console.log("allBestMatches allBestMatches allBestMatches", allBestMatches);
     // Update existing match or create new one using upsert
     await Match.findOneAndUpdate(
       { store_id, influencer_id },
