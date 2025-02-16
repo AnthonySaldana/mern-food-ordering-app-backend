@@ -990,6 +990,7 @@ const searchCart = async (req: Request, res: Response) => {
 const processStoreInventory = async (req: Request, res: Response) => {
   try {
     const { store_id, latitude, longitude, user_street_num, user_street_name, user_city, user_state, user_zipcode, user_country } = req.body;
+    console.log(req.body, 'req.body from process store inventory controller');
 
     if (!store_id) {
       return res.status(400).json({ message: 'Store ID is required' });
@@ -1011,55 +1012,81 @@ const processStoreInventory = async (req: Request, res: Response) => {
       }
     }
 
-    console.log("Processing inventory job for store: ", store_id);
-    mealmeapi.auth(process.env.MEALME_API_KEY as string);
-
-    const response = await mealmeapi.get_inventory_details_v3({
-      store_id: store_id as string,
-      user_latitude: Number(latitude),
-      user_longitude: Number(longitude),
-      pickup: false,
-      include_quote: true,
-      use_new_db: true,
-      user_street_num: user_street_num as string,
-      user_street_name: user_street_name as string,
-      user_city: user_city as string,
-      user_state: user_state as string,
-      user_zipcode: user_zipcode as string,
-      user_country: user_country as string,
-      quote_preference: 'default'
-    });
-
-    console.log(response, 'response.data from grocery controller');
-
-    // Only add to queue if MealMe call succeeded
-    if (response?.data) {
-      // Update or create processing status
-      await StoreProcessingStatus.findOneAndUpdate(
-        { store_id },
-        { 
-          store_id,
-          is_processing: true,
-          time_start: new Date(),
-          time_end: null
+    // Make request to external inventory processing service
+    try {
+      const response = await fetch('https://lvfkh07zhh.execute-api.us-east-1.amazonaws.com/grocery/process-inventory', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
         },
-        { upsert: true }
-      );
-
-      await inventoryQueue.add({
-        store_id,
-        latitude,
-        longitude,
-        user_street_num,
-        user_street_name,
-        user_city,
-        user_state,
-        user_zipcode,
-        user_country
+        body: JSON.stringify({
+          store_id,
+          latitude,
+          longitude,
+          user_street_num,
+          user_street_name, 
+          user_city,
+          user_state,
+          user_zipcode,
+          user_country
+        })
       });
+
+      console.log(await response.json(), 'response from process store inventory controller');
+      // Only add to queue if request succeeded
+      if (response.ok) {
+        // Update or create processing status
+        await StoreProcessingStatus.findOneAndUpdate(
+          { store_id },
+          {
+            store_id,
+            is_processing: true,
+            time_start: new Date(),
+            time_end: null
+          },
+          { upsert: true }
+        );
+
+        // await inventoryQueue.add({
+        //   store_id,
+        //   latitude,
+        //   longitude,
+        //   user_street_num,
+        //   user_street_name,
+        //   user_city,
+        //   user_state,
+        //   user_zipcode,
+        //   user_country
+        // });
+      }
+
+      res.json({ message: 'Store inventory processing started' });
+    } catch (error) {
+      console.error('Error calling external inventory processor:', error);
+      // Continue execution even if external service fails
     }
 
-    res.json(response.data);
+    // console.log("Processing inventory job for store: ", store_id);
+    // mealmeapi.auth(process.env.MEALME_API_KEY as string);
+
+    // const response = await mealmeapi.get_inventory_details_v3({
+    //   store_id: store_id as string,
+    //   user_latitude: Number(latitude),
+    //   user_longitude: Number(longitude),
+    //   pickup: false,
+    //   include_quote: true,
+    //   use_new_db: true,
+    //   user_street_num: user_street_num as string,
+    //   user_street_name: user_street_name as string,
+    //   user_city: user_city as string,
+    //   user_state: user_state as string,
+    //   user_zipcode: user_zipcode as string,
+    //   user_country: user_country as string,
+    //   quote_preference: 'default'
+    // });
+
+    // console.log(response, 'response.data from grocery controller');
+
   } catch (error) {
     console.error('Error queuing store inventory processing:', error);
     res.status(500).json({ message: 'Error queuing store inventory processing' });
