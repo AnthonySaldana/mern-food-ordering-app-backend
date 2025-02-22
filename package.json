@@ -2,12 +2,12 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
   "scripts": {
     "dev": "concurrently \"nodemon\"",
-    "prod": "concurrently \"nodemon\" \"npm run stripe\"",
+    "prod": "npm run build && npm start",
     "stripe": "stripe listen --forward-to localhost:7000/api/order/checkout/webhook",
-    "build": "npm install && npx tsc",
+    "build": "cd .api/apis/mealmeapi && npm install && npm run build && cd ../../../ && npx tsc",
     "start": "node dist/index.js",
     "test": "echo \"No tests specified\" && exit 0",
     "start-worker": "ts-node src/workers/startWorker.ts"
