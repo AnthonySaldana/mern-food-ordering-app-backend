@@ -9,9 +9,24 @@ const STRIPE_ENDPOINT_SECRET = process.env.STRIPE_WEBHOOK_SECRET as string;
 
 const getMyOrders = async (req: Request, res: Response) => {
   try {
-    const orders = await Order.find({ user: req.userId })
+    const { influencerId, userId } = req.query;
+    const query: any = {};
+
+    if (userId) {
+      query.user = userId;
+    }
+    
+    if (influencerId) {
+      query.influencer_id = influencerId;
+    }
+
+    console.log(query, 'query')
+
+    const orders = await Order.find(query)
       .populate("restaurant")
-      .populate("user");
+      .populate("user")
+      .populate("influencer")
+      .sort({ createdAt: -1 }); // Sort by newest first
 
     res.json(orders);
   } catch (error) {

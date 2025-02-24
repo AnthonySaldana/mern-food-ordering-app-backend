@@ -6,6 +6,7 @@ const orderSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   influencer: { type: mongoose.Schema.Types.ObjectId, ref: "Influencer" },
   meal_plan_name: { type: String, required: true },
+  influencer_id: { type: mongoose.Schema.Types.ObjectId, ref: "Influencer" },
   deliveryDetails: {
     latitude: { type: Number, required: false },
     longitude: { type: Number, required: false },
