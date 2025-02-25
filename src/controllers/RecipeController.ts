@@ -23,7 +23,7 @@ export const getRecipes = async (req: Request, res: Response) => {
 
     console.log("influencerId", influencerId);
 
-    const recipes = await Recipe.find({ influencer_id: new mongoose.Types.ObjectId(influencerId) });
+    const recipes = await Recipe.find({ influencer_id: new mongoose.Types.ObjectId(influencerId) }).sort({ name: 1});
     console.log("recipes", recipes);
     res.json(recipes);
   } catch (error) {
