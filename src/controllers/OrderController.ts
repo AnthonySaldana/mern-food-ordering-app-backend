@@ -9,11 +9,12 @@ const STRIPE_ENDPOINT_SECRET = process.env.STRIPE_WEBHOOK_SECRET as string;
 
 const getMyOrders = async (req: Request, res: Response) => {
   try {
-    const { influencerId, userId } = req.query;
+    const { influencerId } = req.query;
     const query: any = {};
+    console.log(req.userId, 'req.userId')
 
-    if (userId) {
-      query.user = userId;
+    if (req.userId) {
+      query.user_id = req.userId;
     }
     
     if (influencerId) {
