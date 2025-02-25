@@ -4,6 +4,7 @@ import Influencer from "./influencer";
 const orderSchema = new mongoose.Schema({
   restaurant: { type: mongoose.Schema.Types.ObjectId, ref: "Restaurant" },
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   influencer: { type: mongoose.Schema.Types.ObjectId, ref: "Influencer" },
   meal_plan_name: { type: String, required: true },
   influencer_id: { type: mongoose.Schema.Types.ObjectId, ref: "Influencer" },
@@ -17,7 +18,10 @@ const orderSchema = new mongoose.Schema({
     country: { type: String, default: 'US' },
     zipcode: { type: String, required: false },
     instructions: { type: String },
-    tip_amount: { type: Number, default: 0 }
+    tip_amount: { type: Number, default: 0 },
+    user_email: { type: String, required: false },
+    user_name: { type: String, required: false },
+    user_phone: { type: String, required: false },
   },
   cartItems: [
     {

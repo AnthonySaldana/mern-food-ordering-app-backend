@@ -700,7 +700,6 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       favorited: false,
       enable_substitution: true,
       autofill_selected_options: true,
-      payment_method_id: payment_details.payment_method_id
     });
 
     console.log(orderResponse.data, 'orderResponse.data');
@@ -708,9 +707,10 @@ const createGroceryOrder = async (req: Request, res: Response) => {
     // Store order in our database
     const order = new Order({
       user: req.userId,
+      user_id: userId,
       store_id,
       items,
-      delivery_details,
+      deliveryDetails: delivery_details,
       mealme_order_id: orderResponse.data.order_id,
       status: 'inProgress',
       total: orderResponse.data.total,
@@ -719,7 +719,7 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       delivery_fee: orderResponse.data.delivery_fee,
       influencer_id, // influencer reference
       meal_plan_name, // Add meal plan name for reference #todo change to id reference?
-      plan_start_day
+      plan_start_day,
     });
 
     console.log(order, 'order');
