@@ -7,8 +7,10 @@ import { InventoryItem } from '../models/grocery';
 import { StoreProcessingStatus } from '../models/grocery';
 import inventoryQueue from '../queues/inventoryQueue';
 import OpenAI from "openai"
+import sgMail from '@sendgrid/mail';
 
 const MEALME_API_KEY = process.env.MEALME_API_KEY as string;
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY as string;
 
 interface StoreMatch {
   store_id: string;
@@ -232,7 +234,7 @@ const searchGroceryStores = async (req: Request, res: Response) => {
     const filteredResponse = {
       ...response.data,
       stores: response.data.stores.filter((store: any) => 
-        groceryStoreIds && groceryStoreIds.includes(store._id) && 
+        // groceryStoreIds && groceryStoreIds.includes(store._id) && 
         !store.name.toLowerCase().includes('liquor')
       )
     };
@@ -723,8 +725,40 @@ const createGroceryOrder = async (req: Request, res: Response) => {
     });
 
     console.log(order, 'order');
-
+    
+    const tracking_link = `https://tracking.mealme.ai/tracking?id=${orderResponse.data.order_id}`;
     await order.save();
+
+    console.log(SENDGRID_API_KEY, 'SENDGRID_API_KEY');
+
+    sgMail.setApiKey(SENDGRID_API_KEY)
+    const msg = {
+      to: delivery_details.user_email, // Change to your recipient
+      from: 'support@fitbite.app', // Change to your verified sender
+      subject: 'Your order has been placed',
+      text: 'Your order has been placed',
+      html: `
+        <div style="text-align: center; font-family: Arial, sans-serif; padding: 20px;">
+          <h2 style="color: #2b2b2b;">Great news! Your FitBite order is on its way! 🎉</h2>
+          <p style="color: #666; margin: 20px 0;">Stay updated on your delivery progress in real-time with our order tracking system.</p>
+          <a href="${tracking_link}" style="display: inline-block; background-color: #4CAF50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Track Your Order</a>
+          
+          <div style="margin-top: 40px;">
+            <p style="color: #666; margin: 20px 0;">Ready to start your culinary journey? Access your personalized recipe guide to create delicious, healthy meals with your fresh ingredients!</p>
+            <a href="https://www.fitbite.app/recipe/${influencer_id}/mealplan/0" style="display: inline-block; background-color: #2196F3; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Your Recipes</a>
+          </div>
+        </div>
+      `,
+    }
+    sgMail
+      .send(msg)
+      .then(() => {
+        console.log('Email sent')
+      })
+      .catch((error) => {
+        console.error(error, 'error for sendgrid');
+        console.error(error.response.body, 'error.response.body');
+      })
 
     res.json(orderResponse.data);
   } catch (error: any) {
