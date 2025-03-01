@@ -753,6 +753,11 @@ const createGroceryOrder = async (req: Request, res: Response) => {
             <p style="color: #666; margin: 20px 0;">Ready to start your culinary journey? Access your personalized recipe guide to create delicious, healthy meals with your fresh ingredients!</p>
             <a href="https://www.fitbite.app/recipe/${influencer_id}/mealplan/0" style="display: inline-block; background-color: #2196F3; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Your Recipes</a>
           </div>
+
+          <div style="margin-top: 40px;">
+            <p style="color: #666; margin: 20px 0;">Love your meal plan? Order it again with just one click!</p>
+            <a href="https://www.fitbite.app/influencer/${influencer_id}/mealplans/0" style="display: inline-block; background-color: #2196F3; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Reorder This Meal Plan</a>
+          </div>
         </div>
       `,
     }
