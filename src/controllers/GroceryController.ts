@@ -234,7 +234,7 @@ const searchGroceryStores = async (req: Request, res: Response) => {
     const filteredResponse = {
       ...response.data,
       stores: response.data.stores.filter((store: any) => 
-        groceryStoreIds && groceryStoreIds.includes(store._id) && 
+        // groceryStoreIds && groceryStoreIds.includes(store._id) && 
         !store.name.toLowerCase().includes('liquor')
       )
     };
@@ -715,10 +715,16 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       deliveryDetails: delivery_details,
       mealme_order_id: orderResponse.data.order_id,
       status: 'inProgress',
-      total: orderResponse.data.total,
+      total: orderResponse.data.final_quote.total_with_tip,
       subtotal: orderResponse.data.subtotal,
+      quote: orderResponse.data.final_quote.quote,
+      added_fees: orderResponse.data.final_quote.added_fees,
       tax: orderResponse.data.tax,
       delivery_fee: orderResponse.data.delivery_fee,
+      service_fee: orderResponse.data.service_fee,
+      driver_tip: delivery_details.tip_amount || 0,
+      platform_fee: orderResponse.data.platform_fee,
+      processing_fee: orderResponse.data.processing_fee,
       influencer_id, // influencer reference
       meal_plan_name, // Add meal plan name for reference #todo change to id reference?
       plan_start_day,
