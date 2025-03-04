@@ -744,19 +744,23 @@ const createGroceryOrder = async (req: Request, res: Response) => {
       subject: 'Your order has been placed',
       text: 'Your order has been placed',
       html: `
-        <div style="text-align: center; font-family: Arial, sans-serif; padding: 20px;">
-          <h2 style="color: #2b2b2b;">Great news! Your FitBite order is on its way! 🎉</h2>
-          <p style="color: #666; margin: 20px 0;">Stay updated on your delivery progress in real-time with our order tracking system.</p>
-          <a href="${tracking_link}" style="display: inline-block; background-color: #4CAF50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Track Your Order</a>
-          
-          <div style="margin-top: 40px;">
-            <p style="color: #666; margin: 20px 0;">Ready to start your culinary journey? Access your personalized recipe guide to create delicious, healthy meals with your fresh ingredients!</p>
-            <a href="https://www.fitbite.app/recipe/${influencer_id}/mealplan/0" style="display: inline-block; background-color: #2196F3; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Your Recipes</a>
-          </div>
+        <div style="background-color: #f5f5f5; padding: 40px 20px;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 40px; font-family: Arial, sans-serif; text-align: center;">
+            <img src="https://www.fitbite.app/logo.png" alt="FitBite Logo" style="width: 150px; height: auto; margin-bottom: 20px;">
+            <h2 style="color: #2b2b2b; margin-top: 0;">Great news! Your FitBite order is on its way! 🎉</h2>
+            <p style="color: #666; margin: 20px 0;">Stay updated on your delivery progress in real-time with our order tracking system.</p>
+            <a href="${tracking_link}" style="display: inline-block; background-color: #4CAF50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Track Your Order</a>
+            
+            <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 30px;">
+              <p style="color: #666; margin: 20px 0;">Ready to start your culinary journey? Access your personalized recipe guide to create delicious, healthy meals with your fresh ingredients!</p>
+              <a href="https://www.fitbite.app/recipe/${influencer_id}/mealplan/0" style="display: inline-block; background-color: #2196F3; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 0;">View Your Recipes</a>
+            </div>
 
-          <div style="margin-top: 40px;">
-            <p style="color: #666; margin: 20px 0;">Love your meal plan? Order it again with just one click!</p>
-            <a href="https://www.fitbite.app/influencer/${influencer_id}/mealplans/0" style="display: inline-block; background-color: #2196F3; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Reorder This Meal Plan</a>
+            <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 30px;">
+              <h3 style="color: #666; margin: 20px 0;">Your meal plan: <strong>${meal_plan_name}</strong></h3>
+              <p style="color: #666; margin: 20px 0;">Love your meal plan? Order it again with just one click!</p>
+              <a href="https://www.fitbite.app/influencer/${influencer_id}/mealplans/0?store_id=${store_id}" style="display: inline-block; background-color: #2196F3; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 10px 0;">Reorder This Meal Plan</a>
+            </div>
           </div>
         </div>
       `,
