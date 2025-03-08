@@ -8,6 +8,7 @@ import { StoreProcessingStatus } from '../models/grocery';
 import inventoryQueue from '../queues/inventoryQueue';
 import OpenAI from "openai"
 import sgMail from '@sendgrid/mail';
+import Store from '../models/store';
 
 const MEALME_API_KEY = process.env.MEALME_API_KEY as string;
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY as string;
@@ -72,8 +73,6 @@ function analyzeStoreMatches(itemAvailability: any[]): StoreMatch[] {
 
 const searchGroceryStores = async (req: Request, res: Response) => {
   try {
-    mealmeapi.auth(MEALME_API_KEY);
-
     const {
       query = '',
       latitude,
@@ -101,23 +100,34 @@ const searchGroceryStores = async (req: Request, res: Response) => {
       });
     }
 
+    // First try to find stores in MongoDB
+    const lat = Number(latitude);
+    const lng = Number(longitude);
+    const maxDistanceInMiles = Number(maximumMiles);
 
-    console.log("Calling mealmeapi.get_search_store_v3");
+    let stores = await Store.find({
+      'address.latitude': { $gte: lat - 0.5, $lte: lat + 0.5 },
+      'address.longitude': { $gte: lng - 0.5, $lte: lng + 0.5 },
+      'last_updated': { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } // Within last 7 days
+    });
 
-    let response;
-    try {
-      response = await mealmeapi.get_search_store_v3({
+    // If no stores found or data is stale, fetch from MealMe
+    if (stores.length === 0) {
+      console.log("No stores found in database, calling MealMe API");
+      
+      mealmeapi.auth(MEALME_API_KEY);
+      const response = await mealmeapi.get_search_store_v3({
         query: query as string,
-        latitude: Number(latitude),
-        longitude: Number(longitude),
-        store_type: 'grocery', 
+        latitude: lat,
+        longitude: lng,
+        store_type: 'grocery',
         budget: Number(budget),
-        maximum_miles: 10,
+        maximum_miles: maxDistanceInMiles,
         search_focus: search_focus as string,
         sort: sort as string,
         pickup: pickup === 'true',
         fetch_quotes: false,
-        open: false, //open === 'true',
+        open: false,
         default_quote: false,
         autocomplete: false,
         include_utc_hours: false,
@@ -130,116 +140,52 @@ const searchGroceryStores = async (req: Request, res: Response) => {
         user_zipcode: user_zipcode as string,
         user_country: user_country as string
       });
+      // Filter and store results in MongoDB
+      const filteredStores = response.data.stores.filter((store: any) => 
+        !store.name.toLowerCase().includes('liquor')
+      );
 
-      console.log(response.data, 'response.data from mealmeapi.get_search_store_v3');
+      // Bulk upsert stores
+      const bulkOps = filteredStores.map((store: any) => ({
+        updateOne: {
+          filter: { _id: store._id },
+          update: {
+            $set: {
+              name: store.name,
+              type: store.type,
+              address: store.address,
+              is_open: store.is_open,
+              miles: store.miles,
+              last_updated: new Date()
+            }
+          },
+          upsert: true
+        }
+      }));
 
-      if (response.data.stores.length === 0) {
-        response = await mealmeapi.get_search_store_v3({
-          query: query as string,
-          latitude: Number(latitude),
-          longitude: Number(longitude),
-          store_type: 'grocery', 
-          budget: Number(budget),
-          maximum_miles: 10,
-          search_focus: search_focus as string,
-          sort: sort as string,
-          pickup: pickup === 'true',
-          fetch_quotes: false,
-          open: false, //open === 'true',
-          default_quote: false,
-          autocomplete: false,
-          include_utc_hours: false,
-          projections: '_id,name,address,type,is_open,miles',
-          use_new_db: true,
-          user_street_num: user_street_num as string,
-          user_street_name: user_street_name as string,
-          user_city: user_city as string,
-          user_state: user_state as string,
-          user_zipcode: user_zipcode as string,
-          user_country: user_country as string
-        });
+      if (bulkOps.length > 0) {
+        await Store.bulkWrite(bulkOps);
       }
-    } catch (error) {
-      // If first attempt fails, retry with fetch_quotes: false
-      response = await mealmeapi.get_search_store_v3({
-        query: query as string,
-        latitude: Number(latitude),
-        longitude: Number(longitude),
-        store_type: 'grocery', 
-        budget: Number(budget),
-        maximum_miles: 10,
-        search_focus: search_focus as string,
-        sort: sort as string,
-        pickup: pickup === 'true',
-        fetch_quotes: false,
-        open: false, //open === 'true',
-        default_quote: false,
-        autocomplete: false,
-        include_utc_hours: false,
-        projections: '_id,name,address,type,is_open,miles',
-        use_new_db: true,
-        user_street_num: user_street_num as string,
-        user_street_name: user_street_name as string,
-        user_city: user_city as string,
-        user_state: user_state as string,
-        user_zipcode: user_zipcode as string,
-        user_country: user_country as string
+
+      return res.json({
+        ...response.data,
+        stores: filteredStores
       });
+    } else {
+      console.log("Stores found in database");
     }
 
-    console.log("Creating store list");
-
-    // Extract store info to analyze with GPT
-    const storeList = response.data.stores.map((store: any) => ({
-      id: store._id,
-      name: store.name,
-      type: store.type,
-      address: store.address
-    }));
-
-    // Call OpenAI API to analyze stores
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
+    // Return stores from database
+    return res.json({
+      stores: stores.map(store => ({
+        _id: store._id,
+        name: store.name,
+        type: store.type,
+        address: store.address,
+        is_open: store.is_open,
+        miles: store.miles
+      }))
     });
-
-    console.log("Calling OpenAI API");
-
-    const gptResponse = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: `You are helping identify true grocery stores from a list of stores.
-          Return only an array of store IDs as json that you determine to be actual grocery stores, excluding convenience stores, gas stations, etc.
-          Don't filter out the following stores: target, aldi`
-        },
-        {
-          role: "user", 
-          content: JSON.stringify(storeList)
-        }
-      ],
-      temperature: 0,
-      response_format: { type: "json_object" }
-    });
-
-    console.log("Parsing GPT response");
-
-    const groceryStoreIds = JSON.parse(gptResponse.choices[0].message.content!)?.store_ids;
-
-    // console.log(groceryStoreIds, 'groceryStoreIds');
-    console.log(response.data, 'response.data');
-    console.log(response.data.stores, 'response.data.stores');
-
-    // Filter original response to only include identified grocery stores
-    const filteredResponse = {
-      ...response.data,
-      stores: response.data.stores.filter((store: any) => 
-        groceryStoreIds && groceryStoreIds.includes(store._id) && 
-        !store.name.toLowerCase().includes('liquor')
-      )
-    };
-
-    res.json(filteredResponse);
 
   } catch (error) {
     console.warn('Error searching grocery stores:', error);
