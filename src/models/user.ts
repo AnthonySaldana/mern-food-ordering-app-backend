@@ -19,6 +19,14 @@ interface Address {
   country: string;
 }
 
+interface PaymentMethod {
+  id: String,
+  exp_month: Number,
+  exp_year: Number,
+  last4: String,
+  network: String
+}
+
 interface User {
   _id: string;
   auth0Id: string;
@@ -31,6 +39,7 @@ interface User {
   role: UserRole;
   createdAt: Date;
   updatedAt: Date;
+  paymentMethods: PaymentMethod[];
 }
 
 const addressSchema = new mongoose.Schema({
@@ -70,6 +79,13 @@ const userSchema = new mongoose.Schema({
     enum: Object.values(UserRole),
     default: UserRole.USER,
   },
+  paymentMethods: [{
+    id: String,
+    exp_month: Number,
+    exp_year: Number,
+    last4: String,
+    network: String
+  }],
 }, {
   timestamps: true
 });
