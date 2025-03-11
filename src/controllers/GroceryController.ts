@@ -756,12 +756,6 @@ const createPaymentMethod = async (req: Request, res: Response) => {
     mealmeapi.auth(MEALME_API_KEY);
     
     const { card_number, exp_month, exp_year, cvc, email } = req.body;
-
-    console.log(email, 'email');
-    console.log(card_number, 'card_number');
-    console.log(exp_month, 'exp_month');
-    console.log(exp_year, 'exp_year');
-    console.log(cvc, 'cvc');
     
     if (!email) {
       return res.status(400).json({ message: 'Email is required' });
@@ -789,8 +783,24 @@ const createPaymentMethod = async (req: Request, res: Response) => {
       }
     });
 
+    // Store payment method in our database
+    const newPaymentMethod = {
+      id: response.data.payment_method_id,
+      last4: card_number.slice(-4),
+      exp_month,
+      exp_year,
+      brand: response.data.card_type || 'unknown'
+    };
+
+    await User.findByIdAndUpdate(user._id, {
+      $push: {
+        paymentMethods: newPaymentMethod
+      }
+    });
+
     res.json({
       ...response.data,
+      paymentMethod: newPaymentMethod,
       user: {
         id: user._id,
         email: user.email,
@@ -872,34 +882,55 @@ const createAddress = async (req: Request, res: Response) => {
 
 const getPaymentMethods = async (req: Request, res: Response) => {
   try {
-    mealmeapi.auth(MEALME_API_KEY);
-
     const { user_email } = req.query;
     
-    console.log(req.userEmail, 'req.userEmail');
-    console.log(user_email, 'user_email');
-
     if (user_email !== req.userEmail) {
       return res.status(403).json({ message: "Forbidden: Email mismatch" });
     }
-
-    console.log(user_email, 'user_email');
     
     if (!user_email) {
       return res.status(400).json({ message: 'Email is required' });
     }
 
-    // Find user in our database
+    // Find user and their payment methods in our database
     const user = await User.findOne({ email: user_email });
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    console.log(user, 'user by id');
+
+    // If we have payment methods stored, return them
+    if (user.paymentMethods && user.paymentMethods.length > 0) {
+      return res.json(user.paymentMethods);
+    }
+
+    // If no payment methods found in our db, fetch from MealMe and store them
+    mealmeapi.auth(MEALME_API_KEY);
     const response = await mealmeapi.get_payment_list({
       user_id: user._id.toString(),
       user_email: user_email as string
     });
+    
+    console.log(response.data, 'response.data from payment');
+    
+    // Store payment methods in our database
+    if (response.data.payment_methods?.length > 0) {
+      const paymentMethods = response.data.payment_methods.map((pm: any) => ({
+        id: pm.id,
+        exp_month: pm.exp_month,
+        exp_year: pm.exp_year,
+        last4: pm.last4,
+        network: pm.network
+      }));
+
+      console.log(paymentMethods, 'paymentMethods for update');
+
+      await User.findByIdAndUpdate(user._id, {
+        $set: { paymentMethods: paymentMethods }
+      });
+    }
 
     res.json(response.data.payment_methods);
   } catch (error) {
@@ -1121,13 +1152,24 @@ const deletePaymentMethod = async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Delete from MealMe
     const response = await mealmeapi.post_payment_delete({
       user_id: user._id.toString(),
       user_email: user.email,
       payment_method_id
     });
 
-    res.json(response.data);
+    // Remove payment method from user's record
+    await User.findByIdAndUpdate(user._id, {
+      $pull: {
+        paymentMethods: { id: payment_method_id }
+      }
+    });
+
+    res.json({
+      ...response.data,
+      message: 'Payment method deleted successfully'
+    });
   } catch (error) {
     console.error('Error deleting payment method:', error);
     res.status(500).json({ message: 'Error deleting payment method' });
