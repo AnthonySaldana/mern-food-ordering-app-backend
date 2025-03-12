@@ -1,7 +1,7 @@
 import express from 'express';
 import { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList,
     createShoppingListOrder, getStoreInventory, getPaymentMethods, createPaymentMethod, getCoordinatesFromAddress,
-    searchCart, processStoreInventory, createAddress, getAddresses, deletePaymentMethod, deleteAddress } from '../controllers/GroceryController';
+    searchCart, processStoreInventory, createAddress, getAddresses, deletePaymentMethod, deleteAddress, getAdminOrders } from '../controllers/GroceryController';
 import { getFitbiteInventory } from '../workers/groceryWorker';
 import { jwtCheck, jwtParse } from '../middleware/auth';
 
@@ -24,4 +24,5 @@ router.post('/addresses', jwtCheck, jwtParse, createAddress);
 router.get('/addresses', jwtCheck, jwtParse, getAddresses);
 router.post('/payment-methods/delete', jwtCheck, jwtParse, deletePaymentMethod);
 router.post('/addresses/delete', jwtCheck, jwtParse, deleteAddress);
+router.get('/admin/orders', jwtCheck, jwtParse, getAdminOrders);
 export default router;
