@@ -142,7 +142,21 @@ const searchGroceryStores = async (req: Request, res: Response) => {
       });
       // Filter and store results in MongoDB
       const filteredStores = response.data.stores.filter((store: any) => 
-        !store.name.toLowerCase().includes('liquor')
+        ( !store.name.toLowerCase().includes('liquor') &&
+        !store.name.toLowerCase().includes('pet') &&
+        !store.name.toLowerCase().includes('pharmacy') &&
+        !store.name.toLowerCase().includes('health') &&
+        !store.name.toLowerCase().includes('beauty') &&
+        !store.name.toLowerCase().includes('hair') &&
+        !store.name.toLowerCase().includes('nail') &&
+        !store.name.toLowerCase().includes('spa') &&
+        !store.name.toLowerCase().includes('clinic') &&
+        !store.name.toLowerCase().includes('doctor') &&
+        !store.name.toLowerCase().includes('dentist') &&
+        !store.name.toLowerCase().includes('vet') &&
+        !store.name.toLowerCase().includes('veterinary') &&
+        !store.name.toLowerCase().includes('animal') &&
+        !store.name.toLowerCase().includes('pet') )
       );
 
       // Bulk upsert stores
@@ -813,6 +827,58 @@ const createPaymentMethod = async (req: Request, res: Response) => {
   }
 };
 
+const getAdminOrders = async (req: Request, res: Response) => {
+  try {
+    const { 
+      influencerId, 
+      status, 
+      startDate, 
+      endDate,
+      sort 
+    } = req.query;
+
+    const query: any = {};
+
+    if (influencerId) {
+      query.influencer_id = influencerId;
+    }
+
+    if (status) {
+      query.status = status;
+    }
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) {
+        query.createdAt.$gte = new Date(startDate as string);
+      }
+      if (endDate) {
+        query.createdAt.$lte = new Date(endDate as string);
+      }
+    }
+
+    // Parse sort parameter
+    let sortOptions = {};
+    if (sort) {
+      const [field, direction] = (sort as string).split(':');
+      sortOptions = { [field]: direction === 'asc' ? 1 : -1 };
+    } else {
+      sortOptions = { createdAt: -1 };
+    }
+
+    const orders = await Order.find(query)
+      .populate("restaurant")
+      .populate("user")
+      .populate("influencer")
+      .sort(sortOptions);
+
+    res.json(orders);
+  } catch (error) {
+    console.error("Error fetching admin orders:", error);
+    res.status(500).json({ message: "Error fetching orders" });
+  }
+};
+
 const createAddress = async (req: Request, res: Response) => {
   try {
     mealmeapi.auth(MEALME_API_KEY);
@@ -1210,4 +1276,4 @@ const deleteAddress = async (req: Request, res: Response) => {
 
 export { searchGroceryStores, searchProducts, getGeolocation, createGroceryOrder, findStoresForShoppingList, createShoppingListOrder,
   getStoreInventory, finalizeOrder, createPaymentMethod, getPaymentMethods, getCoordinatesFromAddress, searchCart, processStoreInventory,
-  getFitbiteInventory, createAddress, getAddresses, deletePaymentMethod, deleteAddress };
+  getFitbiteInventory, createAddress, getAddresses, deletePaymentMethod, deleteAddress, getAdminOrders };
