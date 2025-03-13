@@ -37,6 +37,9 @@ export const mealPlanSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String },
   totalCalories: { type: Number, required: true },
+  totalProtein: { type: Number, required: true },
+  totalCarbs: { type: Number, required: true },
+  totalFat: { type: Number, required: true },
   menuItems: [menuItemSchema],
   deliveryOptions: {
     type: [String],
