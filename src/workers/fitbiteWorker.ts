@@ -78,7 +78,7 @@ export const processFitbiteJob = async (job: Job) => {
             !item.name.toLowerCase().includes('gin') &&
             !item.name.toLowerCase().includes('alcohol')
           ); //.sort({ score: { $meta: "textScore" } });
-
+ 
           if (bestMatches && bestMatches.length > 0) {
             matchedItemNames.add(item.name); // Add original item name to matched names
             allBestMatches.push({
@@ -108,6 +108,7 @@ export const processFitbiteJob = async (job: Job) => {
             console.log("No matches found for item: ", item.name);
             allBestMatches.push({
               name: item.name,
+              searchTerm: item.searchTerm,
               unit_of_measurement: item.unit_of_measurement,
               unit_size: item.unit_size,
               unit_details: item.unit_details,
@@ -184,7 +185,7 @@ export const deprProcessFitbiteJob = async (job: Job) => {
           condition.unit_of_measurement = item.unit_of_measurement;
         }
 
-        if (item.unit_size) {
+        if (item.unit_size) { 
           condition.unit_size = item.unit_size;
         }
 

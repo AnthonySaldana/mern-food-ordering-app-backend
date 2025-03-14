@@ -109,7 +109,7 @@ const searchGroceryStores = async (req: Request, res: Response) => {
       'address.latitude': { $gte: lat - 0.5, $lte: lat + 0.5 },
       'address.longitude': { $gte: lng - 0.5, $lte: lng + 0.5 },
       'last_updated': { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } // Within last 7 days
-    });
+    }).limit(100);
 
     // If no stores found or data is stale, fetch from MealMe
     if (stores.length === 0) {
