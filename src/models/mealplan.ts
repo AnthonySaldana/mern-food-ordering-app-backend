@@ -15,7 +15,7 @@ const unitDetailsSchema = new mongoose.Schema({
 
 const menuItemSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  price: { type: Number, required: true },
+  price: { type: Number, required: false },
   ingredients: { type: String },
   calories: { type: Number },
   macros: macroSchema,

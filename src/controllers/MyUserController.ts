@@ -18,7 +18,7 @@ const getCurrentUser = async (req: Request, res: Response) => {
 
 const createCurrentUser = async (req: Request, res: Response) => {
   try {
-    const { auth0Id, email } = req.body;
+    const { auth0Id, email, role } = req.body;
     const existingUser = await User.findOne({ auth0Id });
 
     if (existingUser) {
@@ -28,7 +28,7 @@ const createCurrentUser = async (req: Request, res: Response) => {
     const newUser = new User({
       auth0Id,
       email,
-      role: UserRole.USER, // Assign default role
+      role: role || UserRole.USER, // Use provided role or default to USER
     });
     await newUser.save();
 
