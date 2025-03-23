@@ -22,13 +22,18 @@ const createCurrentUser = async (req: Request, res: Response) => {
     const existingUser = await User.findOne({ auth0Id });
 
     if (existingUser) {
+      if (role === "creator" && existingUser.role !== "creator") {
+        existingUser.role = UserRole.CREATOR;
+        await existingUser.save();
+        return res.status(200).json(existingUser.toObject());
+      }
       return res.status(200).send();
     }
 
     const newUser = new User({
       auth0Id,
       email,
-      role: role || UserRole.USER, // Use provided role or default to USER
+      role: role || UserRole.USER,
     });
     await newUser.save();
 
